@@ -1,9 +1,12 @@
 package com.example.myapplication.telas
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -11,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -19,7 +23,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Style
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -30,90 +33,119 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.myapplication.dados.AppDados
+import com.example.myapplication.modelo.Perfil
 import com.example.myapplication.navegacao.Rotas
 
-/** Uma categoria do Explorar: emoji, nome e quantidade de pessoas (só ilustrativo). */
+/**
+ * Uma categoria do Explorar. "tipos" diz quais intenções (campo
+ * tipoRelacionamento do Perfil) entram nela — assim a categoria mostra
+ * só as pessoas que têm a mesma intenção.
+ */
 private data class CategoriaExplorar(
     val nome: String,
     val emoji: String,
-    val contagem: String,
-    val corFundo: Color
+    val tipos: List<String>
 )
 
 private val categorias = listOf(
-    CategoriaExplorar("Relacionamento sério", "🌹", "4 mil", Color(0xFF3A1F1F)),
-    CategoriaExplorar("Compromisso sério", "💍", "3 mil", Color(0xFF3A1F33)),
-    CategoriaExplorar("Planos pra hoje?", "🌙", "2 mil", Color(0xFF1F2A3A)),
-    CategoriaExplorar("Algo casual", "🍭", "3 mil", Color(0xFF3A1F1F))
+    CategoriaExplorar("Relacionamento sério", "🌹", listOf("Relacionamento sério")),
+    CategoriaExplorar("Algo casual", "🍭", listOf("Algo casual")),
+    CategoriaExplorar("Ainda estou decidindo", "🤔", listOf("Ainda estou decidindo")),
+    CategoriaExplorar("Compromisso sério", "💍", listOf("Relacionamento sério")),
+    CategoriaExplorar("Planos pra hoje", "🌙", listOf("Algo casual", "Ainda estou decidindo"))
 )
+
+/** Perfis que combinam com a categoria (usada também na tela da categoria). */
+fun perfisDaCategoria(nomeCategoria: String): List<Perfil> {
+    val tipos = categorias.firstOrNull { it.nome == nomeCategoria }?.tipos ?: return emptyList()
+    return AppDados.perfis.filter { it.tipoRelacionamento in tipos }
+}
 
 @Composable
 fun TelaExplorar(navController: NavController) {
-    Scaffold { padding ->
-        Column(
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF121212))
+            .statusBarsPadding()
+            .padding(horizontal = 16.dp)
+    ) {
+        Row(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp)
+                .fillMaxWidth()
+                .padding(top = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(text = "Explorar", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-                IconButton(onClick = { navController.navigate(Rotas.DOUBLE_DATE) }) {
-                    Icon(Icons.Filled.Style, contentDescription = "Double Date", tint = Color.White)
-                }
+            Text(text = "Explorar", color = Color.White, fontSize = 34.sp, fontWeight = FontWeight.Bold)
+            IconButton(onClick = { navController.navigate(Rotas.DOUBLE_DATE) }) {
+                Icon(Icons.Filled.Style, contentDescription = "Double Date", tint = Color.White)
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Conheça pessoas que têm a mesma intenção que você",
-                color = Color.Gray,
-                fontSize = 14.sp
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Conheça pessoas que têm a mesma intenção que você",
+            color = Color(0xFFB5B5B5),
+            fontSize = 17.sp
+        )
+        Spacer(modifier = Modifier.height(16.dp))
 
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(categorias) { categoria ->
-                    CardCategoria(
-                        categoria = categoria,
-                        aoClicar = {
-                            // navega pra tela de detalhe passando o nome da categoria de verdade
-                            navController.navigate(Rotas.explorarDetalhe(categoria.nome))
-                        }
-                    )
-                }
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            // folga embaixo para a barra flutuante não cobrir os últimos cards
+            contentPadding = PaddingValues(bottom = 110.dp),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            items(categorias) { categoria ->
+                CardCategoria(
+                    categoria = categoria,
+                    quantidade = perfisDaCategoria(categoria.nome).size,
+                    aoClicar = {
+                        // Uri.encode porque o nome tem espaços/acentos e vai dentro da rota
+                        navController.navigate(Rotas.explorarDetalhe(Uri.encode(categoria.nome)))
+                    }
+                )
             }
         }
     }
 }
 
 @Composable
-private fun CardCategoria(categoria: CategoriaExplorar, aoClicar: () -> Unit) {
+private fun CardCategoria(categoria: CategoriaExplorar, quantidade: Int, aoClicar: () -> Unit) {
     Column(
         modifier = Modifier
-            .aspectRatio(1f)
-            .clip(RoundedCornerShape(16.dp))
-            .background(categoria.corFundo)
+            .fillMaxWidth()
+            .aspectRatio(0.88f)
+            .clip(RoundedCornerShape(24.dp))
+            .background(Color(0xFF1A1A1A))
             .clickable(onClick = aoClicar)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.SpaceBetween
+            .padding(16.dp)
     ) {
-        Text(text = categoria.emoji, fontSize = 36.sp)
-        Column {
+        // "desenho" da categoria, centralizado na parte de cima
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(text = categoria.emoji, fontSize = 64.sp)
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Bottom
+        ) {
             Text(
                 text = categoria.nome,
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
+                fontSize = 17.sp,
+                modifier = Modifier.weight(1f)
             )
-            Text(text = categoria.contagem, color = Color.Gray, fontSize = 13.sp)
+            Text(text = quantidade.toString(), color = Color(0xFFB5B5B5), fontSize = 16.sp)
         }
     }
 }

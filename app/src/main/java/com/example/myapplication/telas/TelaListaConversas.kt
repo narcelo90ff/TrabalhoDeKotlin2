@@ -24,7 +24,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material.icons.filled.Whatshot
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -39,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -51,6 +55,7 @@ import com.example.myapplication.modelo.Conversa
 import com.example.myapplication.navegacao.Rotas
 
 private val AmareloChat = Color(0xFFF2B600)
+private val CorFracaChat = Color(0xFFB5B5B5)
 
 @Composable
 fun TelaListaConversas(navController: NavController) {
@@ -62,76 +67,88 @@ fun TelaListaConversas(navController: NavController) {
             .background(Color.Black)
             .statusBarsPadding()
     ) {
-        // título + botão de nova conversa
+        // ---- título + "pílula" de botões (escudo, link e nova conversa) ----
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 20.dp, end = 16.dp, top = 16.dp, bottom = 8.dp),
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text("Chat", color = Color.White, fontSize = 34.sp, fontWeight = FontWeight.Bold)
-            Box(
+            Row(
                 modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
+                    .clip(RoundedCornerShape(50))
                     .background(Color(0xFF1A1A1A))
-                    .clickable { mostrarDialogo = true },
-                contentAlignment = Alignment.Center
+                    .border(1.dp, Color(0xFF2E2E2E), RoundedCornerShape(50))
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Filled.Add, contentDescription = "Nova conversa", tint = Color.White)
+                IconButton(onClick = { }) {
+                    Icon(Icons.Filled.Shield, contentDescription = "Segurança", tint = Color.White)
+                }
+                IconButton(onClick = { }) {
+                    Icon(Icons.Filled.Link, contentDescription = "Convidar", tint = Color.White)
+                }
+                // abre o formulário de nova conversa de verdade
+                IconButton(onClick = { mostrarDialogo = true }) {
+                    Icon(Icons.Filled.Add, contentDescription = "Nova conversa", tint = Color.White)
+                }
             }
         }
 
         Text(
             text = "Novos matches",
             color = Color.White,
-            fontSize = 22.sp,
+            fontSize = 18.sp,
             fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
         )
 
-        // linha de matches: o primeiro cartão é o resumo das curtidas
+        // ---- linha de matches: o primeiro cartão é o resumo das curtidas ----
         LazyRow(
-            contentPadding = PaddingValues(horizontal = 20.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
                 Column(
                     modifier = Modifier
-                        .width(96.dp)
+                        .width(82.dp)
                         .clickable {
                             navController.navigate(Rotas.CURTIDAS) { launchSingleTop = true }
                         }
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(96.dp, 128.dp)
-                            .clip(RoundedCornerShape(22.dp))
-                            .background(Color(0xFF1A1A1A))
-                            .border(4.dp, AmareloChat, RoundedCornerShape(22.dp)),
+                            .size(82.dp, 108.dp)
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(
+                                Brush.verticalGradient(listOf(Color(0xFF4A4030), Color(0xFF2A2518)))
+                            )
+                            .border(3.dp, AmareloChat, RoundedCornerShape(20.dp)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                Icons.Filled.Favorite,
-                                contentDescription = null,
-                                tint = AmareloChat,
-                                modifier = Modifier.size(30.dp)
-                            )
+                        // bolinha amarela com a quantidade de curtidas
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(AmareloChat),
+                            contentAlignment = Alignment.Center
+                        ) {
                             Text(
                                 text = AppDados.curtidas.size.toString(),
-                                color = Color.White,
-                                fontSize = 26.sp,
+                                color = Color.Black,
+                                fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = "Curtidas",
                         color = Color.White,
-                        fontSize = 18.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
@@ -140,21 +157,21 @@ fun TelaListaConversas(navController: NavController) {
             items(AppDados.curtidas, key = { it.id }) { pessoa ->
                 Column(
                     modifier = Modifier
-                        .width(96.dp)
+                        .width(82.dp)
                         .clickable { navController.navigate(Rotas.detalheCurtida(pessoa.id)) }
                 ) {
                     FotoOuInicial(
                         foto = pessoa.foto,
                         nome = pessoa.nome,
-                        modifier = Modifier.size(96.dp, 128.dp),
-                        forma = RoundedCornerShape(22.dp),
-                        tamanhoLetra = 36.sp
+                        modifier = Modifier.size(82.dp, 108.dp),
+                        forma = RoundedCornerShape(20.dp),
+                        tamanhoLetra = 32.sp
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = pessoa.nome,
                         color = Color.White,
-                        fontSize = 18.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -164,41 +181,48 @@ fun TelaListaConversas(navController: NavController) {
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-        // painel "Mensagens" com cantos de cima arredondados
+        // ---- painel "Mensagens" com cantos de cima arredondados ----
         Column(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(topStart = 36.dp, topEnd = 36.dp))
+                .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
                 .background(Color(0xFF121212))
         ) {
             Text(
                 text = "Mensagens",
                 color = Color.White,
-                fontSize = 22.sp,
+                fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(start = 20.dp, top = 24.dp, bottom = 8.dp)
+                modifier = Modifier.padding(start = 16.dp, top = 20.dp, bottom = 8.dp)
             )
 
-            if (AppDados.conversas.isEmpty()) {
-                Text(
-                    text = "Nenhuma conversa ainda. Toque no + para começar.",
-                    color = Color(0xFFB5B5B5),
-                    fontSize = 16.sp,
-                    modifier = Modifier.padding(20.dp)
-                )
-            }
-
             // lista de conversas, de verdade reativa
-            LazyColumn {
+            LazyColumn(contentPadding = PaddingValues(bottom = 110.dp)) {
+                // mensagem fixa do app, como a "Team Tinder" do vídeo (texto fictício)
+                item {
+                    LinhaMensagemDoApp(aoClicar = {
+                        navController.navigate(Rotas.PERFIL) { launchSingleTop = true }
+                    })
+                }
                 items(AppDados.conversas, key = { it.id }) { conversa ->
                     LinhaConversa(
                         conversa = conversa,
                         aoClicar = { navController.navigate(Rotas.detalheConversa(conversa.id)) },
                         aoRemover = { AppDados.removerConversa(conversa) }
                     )
+                }
+                if (AppDados.conversas.isEmpty()) {
+                    item {
+                        Text(
+                            text = "Nenhuma conversa ainda. Toque no + para começar.",
+                            color = CorFracaChat,
+                            fontSize = 15.sp,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
                 }
             }
         }
@@ -216,6 +240,45 @@ fun TelaListaConversas(navController: NavController) {
 }
 
 @Composable
+private fun LinhaMensagemDoApp(aoClicar: () -> Unit) {
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = aoClicar)
+                .padding(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFFD32F2F)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Filled.Whatshot, contentDescription = null, tint = Color.White, modifier = Modifier.size(34.dp))
+            }
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Equipe do App", color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Icon(Icons.Filled.Verified, contentDescription = "Verificado", tint = Color.White, modifier = Modifier.size(18.dp))
+                }
+                Text(
+                    text = "🚨 Atualização de perfil obrigatória 🚨",
+                    color = CorFracaChat,
+                    fontSize = 14.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+        DivisorLinha()
+    }
+}
+
+@Composable
 private fun LinhaConversa(
     conversa: Conversa,
     aoClicar: () -> Unit,
@@ -229,29 +292,29 @@ private fun LinhaConversa(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(onClick = aoClicar)
-                .padding(start = 20.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
+                .padding(start = 16.dp, end = 4.dp, top = 10.dp, bottom = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             FotoOuInicial(
                 foto = pessoa?.foto,
                 nome = conversa.nome,
-                modifier = Modifier.size(68.dp),
+                modifier = Modifier.size(64.dp),
                 forma = CircleShape
             )
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = conversa.nome,
                     color = Color.White,
-                    fontSize = 22.sp,
+                    fontSize = 19.sp,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = conversa.mensagens.lastOrNull() ?: "Nenhuma mensagem ainda",
-                    color = Color(0xFFB5B5B5),
-                    fontSize = 16.sp,
+                    color = CorFracaChat,
+                    fontSize = 14.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -260,14 +323,19 @@ private fun LinhaConversa(
                 Icon(Icons.Filled.Delete, contentDescription = "Remover conversa", tint = Color(0xFF8A8A8A))
             }
         }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 104.dp)
-                .height(1.dp)
-                .background(Color(0xFF2E2E2E))
-        )
+        DivisorLinha()
     }
+}
+
+@Composable
+private fun DivisorLinha() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 94.dp)
+            .height(1.dp)
+            .background(Color(0xFF2E2E2E))
+    )
 }
 
 @Composable

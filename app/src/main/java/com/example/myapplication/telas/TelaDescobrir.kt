@@ -47,6 +47,8 @@ import androidx.compose.material.icons.filled.SmokingRooms
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Straighten
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -83,10 +85,25 @@ private val CorBotao = Color(0xFF1E1E1E)
 
 @Composable
 fun TelaDescobrir(navController: NavController) {
+    DeslizarPerfis(perfis = AppDados.perfis, navController = navController)
+}
+
+/**
+ * Tela de curtir pessoas (foto cheia + seta pra cima com as informações).
+ * É usada na aba Descobrir (todos os perfis) e também no Explorar
+ * (só os perfis da categoria escolhida), por isso recebe a lista pronta.
+ */
+@Composable
+fun DeslizarPerfis(
+    perfis: List<Perfil>,
+    navController: NavController,
+    mostrarAbas: Boolean = true,
+    mostrarInteresses: Boolean = false
+) {
     // qual perfil está na tela e se a tela de detalhes (seta pra cima) está aberta
     var indice by rememberSaveable { mutableIntStateOf(0) }
     var mostrandoDetalhe by rememberSaveable { mutableStateOf(false) }
-    val perfil = AppDados.perfis.getOrNull(indice)
+    val perfil = perfis.getOrNull(indice)
 
     if (perfil == null) {
         TelaSemPerfis(onRecomecar = { indice = 0 })
@@ -139,7 +156,9 @@ fun TelaDescobrir(navController: NavController) {
             aoPassar = aoPassar,
             aoFavoritar = aoFavoritar,
             aoCurtir = aoCurtir,
-            aoResponder = aoResponder
+            aoResponder = aoResponder,
+            mostrarAbas = mostrarAbas,
+            mostrarInteresses = mostrarInteresses
         )
     }
 }
@@ -148,6 +167,7 @@ fun TelaDescobrir(navController: NavController) {
 // Tela 1: foto cheia
 // ---------------------------------------------------------------------------
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun FotoPerfil(
     perfil: Perfil,
@@ -157,7 +177,9 @@ private fun FotoPerfil(
     aoPassar: () -> Unit,
     aoFavoritar: () -> Unit,
     aoCurtir: () -> Unit,
-    aoResponder: () -> Unit
+    aoResponder: () -> Unit,
+    mostrarAbas: Boolean,
+    mostrarInteresses: Boolean
 ) {
     Box(
         modifier = Modifier
@@ -183,39 +205,42 @@ private fun FotoPerfil(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(320.dp)
+                .height(if (mostrarInteresses) 400.dp else 320.dp)
                 .align(Alignment.BottomCenter)
                 .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xE6000000))))
         )
 
-        // abas do topo
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Icon(Icons.Filled.Tune, contentDescription = "Filtros", tint = Color.White, modifier = Modifier.size(28.dp))
-            Text(
-                text = "Pra você",
-                color = Color.White,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold,
+        // abas do topo (no Explorar elas não aparecem)
+        if (mostrarAbas) {
+            Row(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .background(Color(0x66000000))
-                    .padding(horizontal = 16.dp, vertical = 10.dp)
-            )
-            Text(
-                text = "Double Date",
-                color = Color.White,
-                fontSize = 15.sp,
-                modifier = Modifier.clickable { aoDoubleDate() }
-            )
-            Text(text = "Astrologia", color = Color.White, fontSize = 15.sp)
-            Icon(Icons.Filled.Bolt, contentDescription = null, tint = Color(0xFFD38CF0), modifier = Modifier.size(26.dp))
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Icon(Icons.Filled.Tune, contentDescription = "Filtros", tint = Color.White, modifier = Modifier.size(28.dp))
+                Text(
+                    text = "Pra você",
+                    color = Color.White,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(Color(0x66000000))
+                        .padding(horizontal = 16.dp, vertical = 10.dp)
+                )
+                Text(
+                    text = "Double Date",
+                    color = Color.White,
+                    fontSize = 15.sp,
+                    modifier = Modifier.clickable { aoDoubleDate() }
+                )
+                Text(text = "Astrologia", color = Color.White, fontSize = 15.sp)
+                Icon(Icons.Filled.Bolt, contentDescription = null, tint = Color(0xFFD38CF0), modifier = Modifier.size(26.dp))
+            }
+
         }
 
         // nome, distância, seta pra cima e botões
@@ -246,11 +271,17 @@ private fun FotoPerfil(
                         Text(perfil.nome, color = Color.White, fontSize = 34.sp, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(perfil.idade.toString(), color = Color.White, fontSize = 30.sp)
+                        if (mostrarInteresses) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Icon(Icons.Filled.Verified, contentDescription = "Verificado", tint = Color.White, modifier = Modifier.size(24.dp))
+                        }
                     }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Filled.LocationOn, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(perfil.distancia, color = Color.White, fontSize = 16.sp)
+                    if (!mostrarInteresses) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Filled.LocationOn, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(perfil.distancia, color = Color.White, fontSize = 16.sp)
+                        }
                     }
                 }
                 // a setinha pra cima: abre as informações do perfil
@@ -262,6 +293,31 @@ private fun FotoPerfil(
                     descricao = "Ver perfil completo",
                     aoClicar = aoAbrirDetalhe
                 )
+            }
+            if (mostrarInteresses) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.Apps, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Interesses", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    perfil.interesses.take(6).forEach { interesse ->
+                        Text(
+                            text = interesse,
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(50))
+                                .border(1.dp, Color(0x99FFFFFF), RoundedCornerShape(50))
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
+                    }
+                }
             }
             Spacer(modifier = Modifier.height(16.dp))
             Row(
@@ -297,15 +353,14 @@ private fun DetalhePerfil(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
                 .statusBarsPadding()
                 .padding(horizontal = 12.dp)
         ) {
-            // cabeçalho com nome, idade e a setinha pra baixo
+            // cabeçalho FIXO com nome, idade e a setinha pra baixo
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 16.dp),
+                    .padding(horizontal = 8.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -324,84 +379,120 @@ private fun DetalhePerfil(
                 )
             }
 
-            // Tô procurando
-            Cartao {
-                CabecalhoSecao(Icons.Filled.Search, perfil.procurando, comMenu = false)
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(perfil.tipoRelacionamento, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.SemiBold)
-                Spacer(modifier = Modifier.height(14.dp))
-                Divisor()
-                Spacer(modifier = Modifier.height(14.dp))
-                Chip("Monogamia")
-            }
-
-            // Sobre mim
-            Cartao {
-                CabecalhoSecao(Icons.Filled.FormatQuote, "Sobre mim", comMenu = true)
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(perfil.sobreMim, color = Color.White, fontSize = 20.sp)
-                BotaoResponderLinha(aoResponder)
-            }
-
-            // Informações básicas
-            Cartao {
-                CabecalhoSecao(Icons.Filled.Person, "Informações básicas", comMenu = true)
-                Spacer(modifier = Modifier.height(12.dp))
-                LinhaInfo(Icons.Filled.LocationOn, perfil.distancia)
-                LinhaInfo(Icons.Filled.Straighten, perfil.altura)
-                LinhaInfo(Icons.Filled.School, perfil.escolaridade)
-                LinhaInfo(Icons.Filled.Person, perfil.genero, comDivisor = false)
-                BotaoResponderLinha(aoResponder)
-            }
-
-            // Pergunta e resposta
-            Cartao {
-                CabecalhoSecao(Icons.Filled.FormatQuote, perfil.pergunta, comMenu = true)
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(perfil.resposta, color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.Bold, lineHeight = 36.sp)
-                BotaoResponderLinha(aoResponder)
-            }
-
-            // Estilo de vida
-            Cartao {
-                CabecalhoSecao(Icons.Filled.LocalOffer, "Estilo de vida", comMenu = false)
-                Spacer(modifier = Modifier.height(12.dp))
-                CampoComRotulo("Bebida", Icons.Filled.LocalBar, perfil.bebida)
-                CampoComRotulo("Você fuma?", Icons.Filled.SmokingRooms, perfil.fuma)
-                CampoComRotulo("Atividade física", Icons.Filled.FitnessCenter, perfil.atividadeFisica)
-                CampoComRotulo("Pets", Icons.Filled.Pets, perfil.pets, comDivisor = false)
-                BotaoResponderLinha(aoResponder)
-            }
-
-            // Mais informações
-            Cartao {
-                CabecalhoSecao(Icons.Filled.LocalOffer, "Mais informações", comMenu = false)
-                Spacer(modifier = Modifier.height(12.dp))
-                CampoComRotulo("Estilo de comunicação", Icons.Filled.Call, perfil.comunicacao)
-                CampoComRotulo("Signo", Icons.Filled.NightsStay, perfil.signo, comDivisor = false)
-                BotaoResponderLinha(aoResponder)
-            }
-
-            // Interesses (os 2 primeiros em rosa = em comum com você)
-            Cartao {
-                CabecalhoSecao(Icons.Filled.Favorite, "Interesses", comMenu = false)
-                Spacer(modifier = Modifier.height(16.dp))
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+            // tudo daqui pra baixo ROLA: a foto e depois todas as informações
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(430.dp)
+                        .padding(vertical = 6.dp)
+                        .clip(RoundedCornerShape(24.dp))
                 ) {
-                    perfil.interesses.forEachIndexed { posicao, interesse ->
-                        Chip(interesse, destaque = posicao < 2)
+                    Image(
+                        painter = painterResource(id = perfil.foto),
+                        contentDescription = "Foto de ${perfil.nome}",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(14.dp)
+                            .clip(RoundedCornerShape(50))
+                            .background(Color.White)
+                            .clickable { aoResponder() }
+                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, tint = CorAzul, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Responder", color = Color.Black, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                     }
                 }
-                BotaoResponderLinha(aoResponder)
+
+                // Tô procurando
+                Cartao {
+                    CabecalhoSecao(Icons.Filled.Search, perfil.procurando, comMenu = false)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(perfil.tipoRelacionamento, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.SemiBold)
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Divisor()
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Chip("Monogamia")
+                }
+
+                // Sobre mim
+                Cartao {
+                    CabecalhoSecao(Icons.Filled.FormatQuote, "Sobre mim", comMenu = true)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(perfil.sobreMim, color = Color.White, fontSize = 20.sp)
+                    BotaoResponderLinha(aoResponder)
+                }
+
+                // Informações básicas
+                Cartao {
+                    CabecalhoSecao(Icons.Filled.Person, "Informações básicas", comMenu = true)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    LinhaInfo(Icons.Filled.LocationOn, perfil.distancia)
+                    LinhaInfo(Icons.Filled.Straighten, perfil.altura)
+                    LinhaInfo(Icons.Filled.School, perfil.escolaridade)
+                    LinhaInfo(Icons.Filled.Person, perfil.genero, comDivisor = false)
+                    BotaoResponderLinha(aoResponder)
+                }
+
+                // Pergunta e resposta
+                Cartao {
+                    CabecalhoSecao(Icons.Filled.FormatQuote, perfil.pergunta, comMenu = true)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(perfil.resposta, color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.Bold, lineHeight = 36.sp)
+                    BotaoResponderLinha(aoResponder)
+                }
+
+                // Estilo de vida
+                Cartao {
+                    CabecalhoSecao(Icons.Filled.LocalOffer, "Estilo de vida", comMenu = false)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    CampoComRotulo("Bebida", Icons.Filled.LocalBar, perfil.bebida)
+                    CampoComRotulo("Você fuma?", Icons.Filled.SmokingRooms, perfil.fuma)
+                    CampoComRotulo("Atividade física", Icons.Filled.FitnessCenter, perfil.atividadeFisica)
+                    CampoComRotulo("Pets", Icons.Filled.Pets, perfil.pets, comDivisor = false)
+                    BotaoResponderLinha(aoResponder)
+                }
+
+                // Mais informações
+                Cartao {
+                    CabecalhoSecao(Icons.Filled.LocalOffer, "Mais informações", comMenu = false)
+                    Spacer(modifier = Modifier.height(12.dp))
+                    CampoComRotulo("Estilo de comunicação", Icons.Filled.Call, perfil.comunicacao)
+                    CampoComRotulo("Signo", Icons.Filled.NightsStay, perfil.signo, comDivisor = false)
+                    BotaoResponderLinha(aoResponder)
+                }
+
+                // Interesses (os 2 primeiros em rosa = em comum com você)
+                Cartao {
+                    CabecalhoSecao(Icons.Filled.Favorite, "Interesses", comMenu = false)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        perfil.interesses.forEachIndexed { posicao, interesse ->
+                            Chip(interesse, destaque = posicao < 2)
+                        }
+                    }
+                    BotaoResponderLinha(aoResponder)
+                }
+
+                BotaoAcao("Compartilhar ${perfil.nome}", Color.White, onClick = {})
+                BotaoAcao("Bloquear ${perfil.nome}", Color.White, onClick = aoPassar)
+                BotaoAcao("Denunciar ${perfil.nome}", Color(0xFFF07070), onClick = aoPassar)
+
+                Spacer(modifier = Modifier.height(130.dp))
             }
-
-            BotaoAcao("Compartilhar ${perfil.nome}", Color.White, onClick = {})
-            BotaoAcao("Bloquear ${perfil.nome}", Color.White, onClick = aoPassar)
-            BotaoAcao("Denunciar ${perfil.nome}", Color(0xFFF07070), onClick = aoPassar)
-
-            Spacer(modifier = Modifier.height(130.dp))
         }
 
         // botões fixos embaixo (não curtir, favoritar, curtir)

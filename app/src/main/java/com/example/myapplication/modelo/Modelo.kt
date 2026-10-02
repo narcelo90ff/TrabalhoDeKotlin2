@@ -2,6 +2,7 @@ package com.example.myapplication.modelo
 
 import androidx.annotation.DrawableRes
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
@@ -33,7 +34,14 @@ data class Conversa(
     val pessoaId: Int?,
     val nome: String,
     val mensagens: MutableList<String>
-)
+) {
+    /**
+     * Posições (índices) das mensagens que EU enviei. As outras mensagens
+     * da lista são da outra pessoa. Fica fora do construtor, igual ao
+     * "favorito" da Pessoa, para não precisar mudar o AppDados.
+     */
+    val minhasMensagens = mutableStateListOf<Int>()
+}
 
 /**
  * Perfil que aparece na tela Descobrir (foto cheia + tela de detalhes).

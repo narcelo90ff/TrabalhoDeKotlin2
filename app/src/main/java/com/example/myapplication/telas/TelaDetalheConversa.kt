@@ -1,8 +1,8 @@
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
-
 package com.example.myapplication.telas
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,27 +11,29 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Send
-import androidx.compose.material.icons.filled.Videocam
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,156 +42,254 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.myapplication.componentes.FotoOuInicial
 import com.example.myapplication.dados.AppDados
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
-/**
- * Representa uma mensagem enviada ou recebida, só para controlar o lado
- * do balão — não é um dado novo salvo em lugar nenhum, só um "rótulo"
- * calculado na hora de desenhar a tela.
- */
-private data class Mensagem(val texto: String, val enviadaPorMim: Boolean)
+private val CorFundoChat = Color(0xFF121212)
+private val CorBotaoChat = Color(0xFF1E1E1E)
+private val CorBalaoMeu = Color(0xFFF1DADA)
+private val CorBalaoDela = Color(0xFF2A2A2A)
+private val CorTextoFracoChat = Color(0xFF9A9A9A)
 
+/** Conversa com uma pessoa: cabeçalho com foto, aviso de match, balões e campo de mensagem. */
 @Composable
 fun TelaDetalheConversa(navController: NavController, conversaId: Int) {
     val conversa = AppDados.buscarConversa(conversaId)
-    var textoNovaMensagem by remember { mutableStateOf("") }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFF3A3A3A))
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(conversa?.nome ?: "Conversa")
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Voltar")
-                    }
-                },
-                actions = {
-                    Icon(Icons.Filled.Videocam, contentDescription = "Chamada de vídeo", tint = Color(0xFF5AB2FF))
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Icon(Icons.Filled.MoreVert, contentDescription = "Mais opções")
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
-            )
-        }
-    ) { padding ->
-        if (conversa == null) {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("Essa conversa não existe mais.")
-            }
-            return@Scaffold
-        }
-
-        // combina dado das duas listas: busca a Pessoa ligada a essa conversa
-        val pessoa = conversa.pessoaId?.let { AppDados.buscarPessoa(it) }
-
-        Column(
+    if (conversa == null) {
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black)
-                .padding(padding)
-                .padding(horizontal = 16.dp)
+                .background(CorFundoChat)
+                .statusBarsPadding(),
+            contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "VOCÊ DEU MATCH COM ${conversa.nome.uppercase()}",
-                color = Color.Gray,
-                fontSize = 11.sp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 12.dp),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-            )
+            Text("Essa conversa não existe mais.", color = Color.White)
+        }
+        return
+    }
 
-            if (pessoa != null) {
+    // combina dado das duas listas: a Pessoa ligada à conversa dá a foto
+    val pessoa = conversa.pessoaId?.let { AppDados.buscarPessoa(it) }
+    val temFotoNaIntro = pessoa?.foto != null
+
+    var texto by remember { mutableStateOf("") }
+    val estadoLista = rememberLazyListState()
+
+    val ptBR = remember { Locale("pt", "BR") }
+    val agora = remember { Date() }
+    val dataMatch = remember { SimpleDateFormat("dd/MM/yy", ptBR).format(agora) }
+    val dataHora = remember { SimpleDateFormat("d 'de' MMM., HH:mm", ptBR).format(agora) }
+
+    // 2 itens fixos no começo (aviso + data) e, se tiver foto, mais 1 (a foto curtida)
+    val itensFixos = if (temFotoNaIntro) 3 else 2
+    val totalItens = itensFixos + conversa.mensagens.size
+
+    // quando chega mensagem nova, a lista desce até ela
+    LaunchedEffect(totalItens) {
+        estadoLista.animateScrollToItem(totalItens - 1)
+    }
+
+    fun enviar() {
+        if (texto.isNotBlank()) {
+            conversa.mensagens.add(texto.trim())
+            conversa.minhasMensagens.add(conversa.mensagens.size - 1)
+            texto = ""
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(CorFundoChat)
+            .statusBarsPadding()
+            .imePadding()
+    ) {
+        // ---- cabeçalho: voltar, foto + nome, menu ----
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            BotaoRedondoChat(onClick = { navController.popBackStack() }) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar", tint = Color.White)
+            }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                FotoOuInicial(
+                    foto = pessoa?.foto,
+                    nome = conversa.nome,
+                    modifier = Modifier.size(56.dp),
+                    forma = CircleShape,
+                    tamanhoLetra = 22.sp
+                )
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "${pessoa.idade} anos — ${pessoa.bio}",
-                    color = Color.Gray,
+                    text = conversa.nome,
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(CorBotaoChat)
+                        .padding(horizontal = 14.dp, vertical = 5.dp)
+                )
+            }
+            BotaoRedondoChat(onClick = { }) {
+                Icon(Icons.Filled.MoreHoriz, contentDescription = "Mais opções", tint = Color.White)
+            }
+        }
+
+        // ---- mensagens (ficam coladas embaixo, como no vídeo) ----
+        LazyColumn(
+            state = estadoLista,
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Bottom)
+        ) {
+            item {
+                Text(
+                    text = "Você deu match com ${conversa.nome} em $dataMatch",
+                    color = CorTextoFracoChat,
                     fontSize = 12.sp,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp)
                 )
-                Spacer(modifier = Modifier.height(8.dp))
             }
-
-            // alterna o lado das mensagens: ímpar = enviada por mim, par = recebida
-            // (só pra ilustrar visualmente, já que aqui é só uma lista simples de texto)
-            val mensagens = conversa.mensagens.mapIndexed { indice, texto ->
-                Mensagem(texto = texto, enviadaPorMim = indice % 2 == 0)
-            }
-
-            LazyColumn(modifier = Modifier.weight(1f)) {
-                items(mensagens) { mensagem ->
-                    BalaoMensagem(mensagem)
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-            }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                OutlinedTextField(
-                    value = textoNovaMensagem,
-                    onValueChange = { textoNovaMensagem = it },
-                    label = { Text("Mensagem") },
-                    modifier = Modifier.weight(1f)
+            item {
+                Text(
+                    text = dataHora,
+                    color = CorTextoFracoChat,
+                    fontSize = 12.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(modifier = Modifier.width(8.dp))
-                IconButton(onClick = {
-                    if (textoNovaMensagem.isNotBlank()) {
-                        conversa.mensagens.add(textoNovaMensagem)
-                        textoNovaMensagem = ""
+            }
+            if (temFotoNaIntro) {
+                item {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.End
+                    ) {
+                        Image(
+                            painter = painterResource(id = pessoa!!.foto!!),
+                            contentDescription = "Foto de ${conversa.nome}",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(width = 86.dp, height = 104.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        BalaoChat("Você curtiu a foto do(a) ${conversa.nome}", minha = true)
+                        Text("Enviado", color = CorTextoFracoChat, fontSize = 11.sp)
                     }
-                }) {
-                    Icon(Icons.Filled.Send, contentDescription = "Enviar", tint = Color(0xFF5AB2FF))
                 }
             }
+            itemsIndexed(conversa.mensagens) { indice, mensagem ->
+                val minha = indice in conversa.minhasMensagens
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = if (minha) Alignment.End else Alignment.Start
+                ) {
+                    BalaoChat(mensagem, minha = minha)
+                    if (minha && indice == conversa.minhasMensagens.lastOrNull()) {
+                        Text("Enviado", color = CorTextoFracoChat, fontSize = 11.sp)
+                    }
+                }
+            }
+        }
+
+        // ---- campo de mensagem: GIF + "Digite uma mensagem" ----
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(CorBotaoChat),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("GIF", color = CorTextoFracoChat, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            }
+            Spacer(modifier = Modifier.width(10.dp))
+            OutlinedTextField(
+                value = texto,
+                onValueChange = { texto = it },
+                placeholder = { Text("Digite uma mensagem", color = CorTextoFracoChat) },
+                singleLine = true,
+                shape = RoundedCornerShape(50),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                keyboardActions = KeyboardActions(onSend = { enviar() }),
+                trailingIcon = {
+                    if (texto.isNotBlank()) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.Send,
+                            contentDescription = "Enviar",
+                            tint = Color(0xFF8FB0F0),
+                            modifier = Modifier.clickable { enviar() }
+                        )
+                    }
+                },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    focusedContainerColor = CorBotaoChat,
+                    unfocusedContainerColor = CorBotaoChat,
+                    focusedBorderColor = Color(0xFF3A3A3A),
+                    unfocusedBorderColor = Color(0xFF2A2A2A),
+                    cursorColor = Color.White
+                ),
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }
 
 @Composable
-private fun BalaoMensagem(mensagem: Mensagem) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = if (mensagem.enviadaPorMim) Arrangement.End else Arrangement.Start
+private fun BotaoRedondoChat(onClick: () -> Unit, conteudo: @Composable () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(46.dp)
+            .clip(CircleShape)
+            .background(CorBotaoChat)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
     ) {
-        Box(
-            modifier = Modifier
-                .widthIn(max = 260.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(if (mensagem.enviadaPorMim) Color(0xFF3B82F6) else Color(0xFF2A2A2A))
-                .padding(horizontal = 14.dp, vertical = 10.dp)
-        ) {
-            Text(text = mensagem.texto, color = Color.White)
-        }
-
-        if (!mensagem.enviadaPorMim) {
-            Spacer(modifier = Modifier.width(8.dp))
-            Icon(
-                Icons.Filled.FavoriteBorder,
-                contentDescription = "Curtir mensagem",
-                tint = Color.Gray,
-                modifier = Modifier.size(18.dp)
-            )
-        }
+        conteudo()
     }
+}
+
+/** Balão da conversa: claro (rosinha) quando é meu, escuro quando é da outra pessoa. */
+@Composable
+private fun BalaoChat(texto: String, minha: Boolean) {
+    Text(
+        text = texto,
+        color = if (minha) Color.Black else Color.White,
+        fontSize = 16.sp,
+        modifier = Modifier
+            .widthIn(max = 280.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(if (minha) CorBalaoMeu else CorBalaoDela)
+            .padding(horizontal = 16.dp, vertical = 10.dp)
+    )
 }

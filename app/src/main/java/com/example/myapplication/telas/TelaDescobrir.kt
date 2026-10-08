@@ -88,11 +88,7 @@ fun TelaDescobrir(navController: NavController) {
     DeslizarPerfis(perfis = AppDados.perfis, navController = navController)
 }
 
-/**
- * Tela de curtir pessoas (foto cheia + seta pra cima com as informações).
- * É usada na aba Descobrir (todos os perfis) e também no Explorar
- * (só os perfis da categoria escolhida), por isso recebe a lista pronta.
- */
+
 @Composable
 fun DeslizarPerfis(
     perfis: List<Perfil>,
@@ -100,7 +96,6 @@ fun DeslizarPerfis(
     mostrarAbas: Boolean = true,
     mostrarInteresses: Boolean = false
 ) {
-    // qual perfil está na tela e se a tela de detalhes (seta pra cima) está aberta
     var indice by rememberSaveable { mutableIntStateOf(0) }
     var mostrandoDetalhe by rememberSaveable { mutableStateOf(false) }
     val perfil = perfis.getOrNull(indice)
@@ -115,7 +110,6 @@ fun DeslizarPerfis(
         indice++
     }
 
-    // interação de verdade: curtir adiciona a pessoa na lista de Curtidas
     val aoPassar: () -> Unit = { proximo() }
     val aoCurtir: () -> Unit = {
         AppDados.curtir(perfil)
@@ -131,7 +125,6 @@ fun DeslizarPerfis(
             indice--
         }
     }
-    // curtir + abrir a conversa com a pessoa
     val aoResponder: () -> Unit = {
         val pessoa = AppDados.curtir(perfil)
         val conversa = AppDados.iniciarConversaComPessoa(pessoa)
@@ -163,9 +156,6 @@ fun DeslizarPerfis(
     }
 }
 
-// ---------------------------------------------------------------------------
-// Tela 1: foto cheia
-// ---------------------------------------------------------------------------
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -194,7 +184,6 @@ private fun FotoPerfil(
             modifier = Modifier.fillMaxSize()
         )
 
-        // sombra em cima (abas) e embaixo (nome e botões) para o texto ler bem
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -210,7 +199,6 @@ private fun FotoPerfil(
                 .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xE6000000))))
         )
 
-        // abas do topo (no Explorar elas não aparecem)
         if (mostrarAbas) {
             Row(
                 modifier = Modifier
@@ -243,7 +231,6 @@ private fun FotoPerfil(
 
         }
 
-        // nome, distância, seta pra cima e botões
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -335,9 +322,6 @@ private fun FotoPerfil(
     }
 }
 
-// ---------------------------------------------------------------------------
-// Tela 2: informações do perfil (abre com a setinha pra cima)
-// ---------------------------------------------------------------------------
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -356,7 +340,6 @@ private fun DetalhePerfil(
                 .statusBarsPadding()
                 .padding(horizontal = 12.dp)
         ) {
-            // cabeçalho FIXO com nome, idade e a setinha pra baixo
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -379,7 +362,6 @@ private fun DetalhePerfil(
                 )
             }
 
-            // tudo daqui pra baixo ROLA: a foto e depois todas as informações
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -414,7 +396,6 @@ private fun DetalhePerfil(
                     }
                 }
 
-                // Tô procurando
                 Cartao {
                     CabecalhoSecao(Icons.Filled.Search, perfil.procurando, comMenu = false)
                     Spacer(modifier = Modifier.height(12.dp))
@@ -516,9 +497,6 @@ private fun DetalhePerfil(
     }
 }
 
-// ---------------------------------------------------------------------------
-// Tela quando acabam os perfis
-// ---------------------------------------------------------------------------
 
 @Composable
 private fun TelaSemPerfis(onRecomecar: () -> Unit) {
@@ -548,9 +526,6 @@ private fun TelaSemPerfis(onRecomecar: () -> Unit) {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Pedacinhos reutilizáveis
-// ---------------------------------------------------------------------------
 
 @Composable
 private fun BotaoCirculo(

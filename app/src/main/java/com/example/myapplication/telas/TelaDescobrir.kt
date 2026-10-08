@@ -103,16 +103,19 @@ fun DeslizarPerfis(
     // qual perfil está na tela e se a tela de detalhes (seta pra cima) está aberta
     var indice by rememberSaveable { mutableIntStateOf(0) }
     var mostrandoDetalhe by rememberSaveable { mutableStateOf(false) }
-    val perfil = perfis.getOrNull(indice)
 
-    if (perfil == null) {
+    // só aparece a tela "sem perfis" se a lista estiver vazia (ex.: categoria sem ninguém)
+    if (perfis.isEmpty()) {
         TelaSemPerfis(onRecomecar = { indice = 0 })
         return
     }
 
+    // LOOP: o índice sempre dá a volta, então depois do último perfil volta pro primeiro
+    val perfil = perfis[indice.mod(perfis.size)]
+
     fun proximo() {
         mostrandoDetalhe = false
-        indice++
+        indice = (indice.mod(perfis.size) + 1) % perfis.size
     }
 
     // interação de verdade: curtir adiciona a pessoa na lista de Curtidas
@@ -126,10 +129,9 @@ fun DeslizarPerfis(
         proximo()
     }
     val aoVoltar: () -> Unit = {
-        if (indice > 0) {
-            mostrandoDetalhe = false
-            indice--
-        }
+        // também dá a volta: do primeiro perfil volta pro último
+        mostrandoDetalhe = false
+        indice = (indice.mod(perfis.size) - 1 + perfis.size) % perfis.size
     }
     // curtir + abrir a conversa com a pessoa
     val aoResponder: () -> Unit = {
@@ -152,6 +154,7 @@ fun DeslizarPerfis(
             perfil = perfil,
             aoAbrirDetalhe = { mostrandoDetalhe = true },
             aoDoubleDate = { navController.navigate(Rotas.DOUBLE_DATE) },
+            aoFiltros = { navController.navigate(Rotas.FILTROS) },
             aoVoltar = aoVoltar,
             aoPassar = aoPassar,
             aoFavoritar = aoFavoritar,
@@ -173,6 +176,7 @@ private fun FotoPerfil(
     perfil: Perfil,
     aoAbrirDetalhe: () -> Unit,
     aoDoubleDate: () -> Unit,
+    aoFiltros: () -> Unit,
     aoVoltar: () -> Unit,
     aoPassar: () -> Unit,
     aoFavoritar: () -> Unit,
@@ -220,7 +224,14 @@ private fun FotoPerfil(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Icon(Icons.Filled.Tune, contentDescription = "Filtros", tint = Color.White, modifier = Modifier.size(28.dp))
+                Icon(
+                    Icons.Filled.Tune,
+                    contentDescription = "Filtros",
+                    tint = Color.White,
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clickable(onClick = aoFiltros)
+                )
                 Text(
                     text = "Pra você",
                     color = Color.White,

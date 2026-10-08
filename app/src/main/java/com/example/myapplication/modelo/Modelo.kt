@@ -19,7 +19,8 @@ data class Pessoa(
     val nome: String,
     val idade: Int,
     val bio: String,
-    @DrawableRes val foto: Int? = null
+    @DrawableRes val foto: Int? = null,
+    val distanciaKm: Int? = null
 ) {
     var favorito by mutableStateOf(false)
 }

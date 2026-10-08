@@ -21,6 +21,7 @@ import com.example.myapplication.telas.TelaDetalheCurtida
 import com.example.myapplication.telas.TelaDoubleDate
 import com.example.myapplication.telas.TelaExplorar
 import com.example.myapplication.telas.TelaExplorarDetalhe
+import com.example.myapplication.telas.TelaFiltros
 import com.example.myapplication.telas.TelaListaConversas
 import com.example.myapplication.telas.TelaListaCurtidas
 import com.example.myapplication.telas.TelaPerfil
@@ -86,6 +87,9 @@ fun AppNavigation() {
             }
             composable(Rotas.CONFIGURACOES) {
                 TelaConfiguracoes(navController = navController)
+            }
+            composable(Rotas.FILTROS) {
+                TelaFiltros(navController = navController)
             }
         }
     }

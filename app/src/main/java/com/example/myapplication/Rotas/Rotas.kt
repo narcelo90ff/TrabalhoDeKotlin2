@@ -12,6 +12,7 @@ object Rotas {
     const val PERFIL = "perfil"
     const val DOUBLE_DATE = "double_date"
     const val CONFIGURACOES = "configuracoes"
+    const val FILTROS = "filtros"
 
     const val DETALHE_CURTIDA = "detalhe_curtida/{pessoaId}"
     const val DETALHE_CONVERSA = "detalhe_conversa/{conversaId}"

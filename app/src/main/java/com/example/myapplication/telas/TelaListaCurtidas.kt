@@ -1,6 +1,9 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+
 package com.example.myapplication.telas
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -23,6 +27,8 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -30,15 +36,16 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -55,19 +62,16 @@ import com.example.myapplication.componentes.FotoOuInicial
 import com.example.myapplication.dados.AppDados
 import com.example.myapplication.modelo.Pessoa
 import com.example.myapplication.navegacao.Rotas
+import kotlinx.coroutines.launch
 
 @Composable
 fun TelaListaCurtidas(navController: NavController) {
     var mostrarDialogo by remember { mutableStateOf(false) }
     var ordem by remember { mutableStateOf("Recomendado") }
-    var menuAberto by remember { mutableStateOf(false) }
+    var mostrarOrdenacao by remember { mutableStateOf(false) }
 
-    // a lista muda de ordem conforme o filtro escolhido
-    val lista = when (ordem) {
-        "Nome" -> AppDados.curtidas.sortedBy { it.nome }
-        "Idade" -> AppDados.curtidas.sortedBy { it.idade }
-        else -> AppDados.curtidas.toList()
-    }
+    // a lista muda de ordem conforme a opção escolhida na folha "Organize suas curtidas por"
+    val lista = ordenarCurtidas(AppDados.curtidas, ordem)
 
     Box(
         modifier = Modifier
@@ -104,30 +108,17 @@ fun TelaListaCurtidas(navController: NavController) {
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // filtro "Recomendado" (muda a ordem da lista)
-            Box {
-                Row(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(50))
-                        .background(Color(0xFFF1F1F1))
-                        .clickable { menuAberto = true }
-                        .padding(start = 20.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(ordem, color = Color.Black, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-                    Icon(Icons.Filled.KeyboardArrowDown, contentDescription = null, tint = Color.Black)
-                }
-                DropdownMenu(expanded = menuAberto, onDismissRequest = { menuAberto = false }) {
-                    listOf("Recomendado", "Nome", "Idade").forEach { opcao ->
-                        DropdownMenuItem(
-                            text = { Text(opcao) },
-                            onClick = {
-                                ordem = opcao
-                                menuAberto = false
-                            }
-                        )
-                    }
-                }
+            // botão "Recomendado": abre a folha de ordenação
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(Color(0xFFF1F1F1))
+                    .clickable { mostrarOrdenacao = true }
+                    .padding(start = 20.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(ordem, color = Color.Black, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                Icon(Icons.Filled.KeyboardArrowDown, contentDescription = null, tint = Color.Black)
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -150,7 +141,11 @@ fun TelaListaCurtidas(navController: NavController) {
                 items(lista, key = { it.id }) { pessoa ->
                     CartaoCurtida(
                         pessoa = pessoa,
-                        aoClicar = { navController.navigate(Rotas.detalheCurtida(pessoa.id)) },
+                        // tocar na foto abre o chat direto (cria a conversa se ainda não existir)
+                        aoClicar = {
+                            val conversa = AppDados.iniciarConversaComPessoa(pessoa)
+                            navController.navigate(Rotas.detalheConversa(conversa.id))
+                        },
                         aoFavoritar = { pessoa.favorito = !pessoa.favorito },
                         aoRemover = { AppDados.removerPessoa(pessoa) }
                     )
@@ -173,6 +168,14 @@ fun TelaListaCurtidas(navController: NavController) {
         ) {
             Text("Adicionar curtida", fontSize = 19.sp, fontWeight = FontWeight.Bold)
         }
+    }
+
+    if (mostrarOrdenacao) {
+        SheetOrdenacao(
+            ordemAtual = ordem,
+            aoAplicar = { ordem = it },
+            aoFechar = { mostrarOrdenacao = false }
+        )
     }
 
     if (mostrarDialogo) {
@@ -348,4 +351,153 @@ private fun DialogNovaCurtida(
             TextButton(onClick = aoFechar) { Text("Cancelar") }
         }
     )
+}
+
+// =====================================================================
+// ORDENAÇÃO ("Organize suas curtidas por")
+// =====================================================================
+
+private val opcoesOrdem = listOf(
+    "Recomendado",
+    "Mais recentes",
+    "Destaques",
+    "Distância",
+    "Online recentemente"
+)
+
+/** Devolve a lista de curtidas na ordem escolhida. */
+private fun ordenarCurtidas(curtidas: List<Pessoa>, ordem: String): List<Pessoa> = when (ordem) {
+    // quem entrou por último (maior id) primeiro
+    "Mais recentes" -> curtidas.sortedByDescending { it.id }
+    // favoritos no topo (a ordem original se mantém dentro de cada grupo)
+    "Destaques" -> curtidas.sortedByDescending { it.favorito }
+    // mais perto primeiro; quem não tem distância vai pro fim
+    "Distância" -> curtidas.sortedBy { it.distanciaKm ?: Int.MAX_VALUE }
+    // o app não tem horário real de acesso, então isso é simulado (dado fictício)
+    "Online recentemente" -> curtidas.sortedBy { (it.id * 37) % 90 }
+    else -> curtidas.toList() // Recomendado = ordem original
+}
+
+/** Folha de baixo: escolhe a ordem e confirma no ✓ (o ✕ fecha sem mudar nada). */
+@Composable
+private fun SheetOrdenacao(
+    ordemAtual: String,
+    aoAplicar: (String) -> Unit,
+    aoFechar: () -> Unit
+) {
+    val estadoSheet = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val escopo = rememberCoroutineScope()
+    var escolhida by remember { mutableStateOf(ordemAtual) }
+
+    // fecha com animação e só depois avisa a tela
+    fun fechar(depois: () -> Unit = {}) {
+        escopo.launch { estadoSheet.hide() }.invokeOnCompletion {
+            depois()
+            aoFechar()
+        }
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = aoFechar,
+        sheetState = estadoSheet,
+        containerColor = Color(0xFF1A1A1A),
+        contentColor = Color.White
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .navigationBarsPadding()
+                .padding(bottom = 16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                BotaoRedondoSheet(
+                    icone = Icons.Filled.Close,
+                    descricao = "Fechar",
+                    fundo = Color.Transparent,
+                    corIcone = Color.White,
+                    aoClicar = { fechar() }
+                )
+                Text(
+                    text = "Organize suas curtidas por",
+                    color = Color.White,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                BotaoRedondoSheet(
+                    icone = Icons.Filled.Check,
+                    descricao = "Aplicar",
+                    fundo = Color.White,
+                    corIcone = Color.Black,
+                    aoClicar = { fechar { aoAplicar(escolhida) } }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            opcoesOrdem.forEach { opcao ->
+                OpcaoOrdem(
+                    texto = opcao,
+                    selecionada = escolhida == opcao,
+                    aoClicar = { escolhida = opcao }
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun BotaoRedondoSheet(
+    icone: androidx.compose.ui.graphics.vector.ImageVector,
+    descricao: String,
+    fundo: Color,
+    corIcone: Color,
+    aoClicar: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .size(36.dp)
+            .clip(CircleShape)
+            .background(fundo)
+            .clickable(onClick = aoClicar),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(icone, contentDescription = descricao, tint = corIcone, modifier = Modifier.size(20.dp))
+    }
+}
+
+/** Linha de opção: borda vermelha e ✓ quando é a escolhida. */
+@Composable
+private fun OpcaoOrdem(texto: String, selecionada: Boolean, aoClicar: () -> Unit) {
+    val forma = RoundedCornerShape(10.dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(forma)
+            .background(Color(0xFF121212))
+            .border(1.5.dp, if (selecionada) Color(0xFFD32F2F) else Color(0xFF2E2E2E), forma)
+            .clickable(onClick = aoClicar)
+            .padding(horizontal = 14.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = texto,
+            color = Color.White,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.weight(1f)
+        )
+        if (selecionada) {
+            Icon(
+                Icons.Filled.Check,
+                contentDescription = "Selecionado",
+                tint = Color(0xFFD32F2F),
+                modifier = Modifier.size(18.dp)
+            )
+        }
+    }
 }

@@ -109,7 +109,9 @@ object AppDados {
             nome = perfil.nome,
             idade = perfil.idade,
             bio = "Deu match com você agora!",
-            foto = perfil.foto
+            foto = perfil.foto,
+            // "a 2 km de distância" -> 2
+            distanciaKm = perfil.distancia.filter { it.isDigit() }.toIntOrNull()
         ).also { perfil.pessoaId = it.id }
         if (favorito) pessoa.favorito = true
         return pessoa
@@ -118,8 +120,17 @@ object AppDados {
     private var proximoIdPessoa = 3
     private var proximoIdConversa = 3
 
-    fun adicionarPessoa(nome: String, idade: Int, bio: String, foto: Int? = null): Pessoa {
-        val nova = Pessoa(id = proximoIdPessoa, nome = nome, idade = idade, bio = bio, foto = foto)
+    fun adicionarPessoa(
+        nome: String,
+        idade: Int,
+        bio: String,
+        foto: Int? = null,
+        distanciaKm: Int? = null
+    ): Pessoa {
+        val nova = Pessoa(
+            id = proximoIdPessoa, nome = nome, idade = idade, bio = bio,
+            foto = foto, distanciaKm = distanciaKm
+        )
         proximoIdPessoa++
         curtidas.add(nova)
         return nova

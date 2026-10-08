@@ -69,9 +69,7 @@ import androidx.navigation.NavController
 import com.example.myapplication.dados.Preferencias
 import kotlin.math.roundToInt
 
-// ---------------------------------------------------------------------
-// Cores e textos fixos da tela
-// ---------------------------------------------------------------------
+
 internal val CfgFundo = Color.Black
 internal val CfgCartao = Color(0xFF1A1A1A)
 internal val CfgDivisor = Color(0xFF2A2A2A)
@@ -81,9 +79,7 @@ internal val CfgDourado = Color(0xFFF2B600)
 internal val CfgPlatina = Color(0xFF9E9E9E)
 private const val NOME_APP = "TINDER"
 
-// =====================================================================
-// TELA PRINCIPAL
-// =====================================================================
+
 
 @Composable
 fun TelaConfiguracoes(navController: NavController) {
@@ -130,11 +126,7 @@ fun TelaConfiguracoes(navController: NavController) {
     }
 }
 
-// =====================================================================
-// BARRA DO TOPO
-// =====================================================================
 
-/** Título centralizado e botão de confirmar (✓) no canto direito. */
 @Composable
 private fun BarraTopoConfig(aoConfirmar: () -> Unit) {
     Box(
@@ -163,9 +155,7 @@ private fun BarraTopoConfig(aoConfirmar: () -> Unit) {
     }
 }
 
-// =====================================================================
-// SEÇÕES
-// =====================================================================
+
 
 @Composable
 private fun SecaoPlanos() {
@@ -202,7 +192,6 @@ private fun SecaoConta() {
     TextoAjuda("Verifique um e-mail para ajudar a proteger a sua conta.")
 }
 
-/** Também usada pela tela de Filtros (TelaFiltros). */
 @Composable
 internal fun SecaoDescobertaPremium() {
     TituloSecao("Descoberta Premium", selo = "GOLD", corSelo = CfgDourado, corTextoSelo = Color.Black)
@@ -253,7 +242,6 @@ internal fun SecaoDescobertaPremium() {
     }
 }
 
-/** Também usada pela tela de Filtros (TelaFiltros). */
 @Composable
 internal fun SecaoDescoberta() {
     TituloSecao("Descoberta")
@@ -455,9 +443,7 @@ private fun SecaoRodape() {
     Spacer(modifier = Modifier.navigationBarsPadding().height(32.dp))
 }
 
-// =====================================================================
-// COMPONENTES REUTILIZÁVEIS
-// =====================================================================
+
 
 @Composable
 internal fun TituloSecao(
@@ -524,7 +510,6 @@ internal fun DivisorFino() {
     )
 }
 
-/** Cartão de plano: logo do app + selo colorido + descrição. */
 @Composable
 private fun CartaoPlano(selo: String, corSelo: Color, corTextoSelo: Color, descricao: String) {
     Column(
@@ -562,7 +547,6 @@ private fun CartaoAtalho(icone: ImageVector, corIcone: Color, texto: String, mod
     }
 }
 
-/** Linha com rótulo à esquerda, valor à direita e seta; opcionalmente ícone e texto de ajuda. */
 @Composable
 internal fun LinhaNavegacao(
     rotulo: String,
@@ -714,7 +698,6 @@ internal fun coresSlider() = SliderDefaults.colors(
     inactiveTickColor = Color.Transparent
 )
 
-/** Linha de escolha única: mostra um ✓ vermelho quando está selecionada. */
 @Composable
 private fun LinhaOpcao(
     titulo: String,

@@ -18,10 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 
-/**
- * Mostra a foto da pessoa; se ela não tiver foto, mostra um fundo colorido
- * com a inicial do nome.
- */
+
 @Composable
 fun FotoOuInicial(
     foto: Int?,

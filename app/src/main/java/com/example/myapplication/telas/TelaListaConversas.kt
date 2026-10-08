@@ -60,9 +60,7 @@ private val CorFracaChat = Color(0xFFB5B5B5)
 private val CorBordaChat = Color(0xFF2E2E2E)
 private val CorPilulaChat = Color(0xFF1A1A1A)
 
-// =====================================================================
-// TELA PRINCIPAL
-// =====================================================================
+
 
 @Composable
 fun TelaListaConversas(navController: NavController) {
@@ -88,7 +86,6 @@ fun TelaListaConversas(navController: NavController) {
             aoClicarCurtidas = {
                 navController.navigate(Rotas.CURTIDAS) { launchSingleTop = true }
             },
-            // toque na foto abre o chat direto (cria a conversa se ainda não existir)
             aoClicarPessoa = { pessoa ->
                 val conversa = AppDados.iniciarConversaComPessoa(pessoa)
                 navController.navigate(Rotas.detalheConversa(conversa.id))
@@ -114,11 +111,7 @@ fun TelaListaConversas(navController: NavController) {
     }
 }
 
-// =====================================================================
-// CABEÇALHO
-// =====================================================================
 
-/** Título "Chat" + pílula de botões (escudo, link e nova conversa). */
 @Composable
 private fun CabecalhoChat(aoNovaConversa: () -> Unit) {
     Row(
@@ -150,11 +143,7 @@ private fun CabecalhoChat(aoNovaConversa: () -> Unit) {
     }
 }
 
-// =====================================================================
-// NOVOS MATCHES (linha horizontal)
-// =====================================================================
 
-/** Primeiro cartão = resumo das curtidas; os seguintes = cada pessoa. */
 @Composable
 private fun LinhaNovosMatches(
     aoClicarCurtidas: () -> Unit,
@@ -240,9 +229,7 @@ private fun CartaoMatch(pessoa: Pessoa, aoClicar: () -> Unit) {
     }
 }
 
-// =====================================================================
-// PAINEL "MENSAGENS" (lista vertical)
-// =====================================================================
+
 
 @Composable
 private fun PainelMensagens(navController: NavController, modifier: Modifier = Modifier) {
@@ -266,7 +253,6 @@ private fun PainelMensagens(navController: NavController, modifier: Modifier = M
                 .fillMaxWidth(),
             contentPadding = PaddingValues(bottom = 110.dp)
         ) {
-            // mensagem fixa do app (texto fictício)
             item {
                 LinhaMensagemDoApp(aoClicar = {
                     navController.navigate(Rotas.PERFIL) { launchSingleTop = true }
@@ -348,7 +334,6 @@ private fun LinhaConversa(
     aoClicar: () -> Unit,
     aoRemover: () -> Unit
 ) {
-    // combina dado das duas listas: a Pessoa ligada à conversa dá a foto
     val pessoa = conversa.pessoaId?.let { AppDados.buscarPessoa(it) }
 
     Column {
@@ -406,9 +391,7 @@ private fun DivisorLinha() {
     )
 }
 
-// =====================================================================
-// DIÁLOGO
-// =====================================================================
+
 
 @Composable
 private fun DialogNovaConversa(aoFechar: () -> Unit, aoIniciar: (String) -> Unit) {

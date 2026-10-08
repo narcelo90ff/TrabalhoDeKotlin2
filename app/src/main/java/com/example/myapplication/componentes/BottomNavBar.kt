@@ -47,10 +47,8 @@ private val itensMenu = listOf(
     ItemMenu(Rotas.PERFIL, "Perfil", Icons.Filled.Person)
 )
 
-/** Só essas rotas (as abas principais) mostram a barra inferior. */
 fun rotaTemBottomBar(rota: String?): Boolean = itensMenu.any { it.rota == rota }
 
-/** Barra inferior em formato de "pílula" flutuante, com a aba atual destacada. */
 @Composable
 fun BottomNavBar(navController: NavController) {
     val backStackEntry by navController.currentBackStackEntryAsState()

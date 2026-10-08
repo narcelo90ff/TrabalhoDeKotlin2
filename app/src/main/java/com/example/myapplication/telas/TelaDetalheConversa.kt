@@ -62,7 +62,6 @@ private val CorBalaoMeu = Color(0xFFF1DADA)
 private val CorBalaoDela = Color(0xFF2A2A2A)
 private val CorTextoFracoChat = Color(0xFF9A9A9A)
 
-/** Conversa com uma pessoa: cabeçalho com foto, aviso de match, balões e campo de mensagem. */
 @Composable
 fun TelaDetalheConversa(navController: NavController, conversaId: Int) {
     val conversa = AppDados.buscarConversa(conversaId)
@@ -80,7 +79,6 @@ fun TelaDetalheConversa(navController: NavController, conversaId: Int) {
         return
     }
 
-    // combina dado das duas listas: a Pessoa ligada à conversa dá a foto
     val pessoa = conversa.pessoaId?.let { AppDados.buscarPessoa(it) }
     val temFotoNaIntro = pessoa?.foto != null
 
@@ -92,11 +90,9 @@ fun TelaDetalheConversa(navController: NavController, conversaId: Int) {
     val dataMatch = remember { SimpleDateFormat("dd/MM/yy", ptBR).format(agora) }
     val dataHora = remember { SimpleDateFormat("d 'de' MMM., HH:mm", ptBR).format(agora) }
 
-    // 2 itens fixos no começo (aviso + data) e, se tiver foto, mais 1 (a foto curtida)
     val itensFixos = if (temFotoNaIntro) 3 else 2
     val totalItens = itensFixos + conversa.mensagens.size
 
-    // quando chega mensagem nova, a lista desce até ela
     LaunchedEffect(totalItens) {
         estadoLista.animateScrollToItem(totalItens - 1)
     }
@@ -116,7 +112,6 @@ fun TelaDetalheConversa(navController: NavController, conversaId: Int) {
             .statusBarsPadding()
             .imePadding()
     ) {
-        // ---- cabeçalho: voltar, foto + nome, menu ----
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -152,7 +147,6 @@ fun TelaDetalheConversa(navController: NavController, conversaId: Int) {
             }
         }
 
-        // ---- mensagens (ficam coladas embaixo, como no vídeo) ----
         LazyColumn(
             state = estadoLista,
             modifier = Modifier
@@ -215,7 +209,6 @@ fun TelaDetalheConversa(navController: NavController, conversaId: Int) {
             }
         }
 
-        // ---- campo de mensagem: GIF + "Digite uma mensagem" ----
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -279,7 +272,6 @@ private fun BotaoRedondoChat(onClick: () -> Unit, conteudo: @Composable () -> Un
     }
 }
 
-/** Balão da conversa: claro (rosinha) quando é meu, escuro quando é da outra pessoa. */
 @Composable
 private fun BalaoChat(texto: String, minha: Boolean) {
     Text(

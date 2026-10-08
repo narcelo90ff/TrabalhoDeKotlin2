@@ -4,11 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
-/**
- * Preferências de descoberta (filtros), em memória, igual ao AppDados.
- * A tela de Filtros e a tela de Configurações leem e escrevem aqui,
- * então as duas ficam sempre sincronizadas.
- */
+
 object Preferencias {
     var minimoFotos by mutableStateOf(1f)
     var comBio by mutableStateOf(false)

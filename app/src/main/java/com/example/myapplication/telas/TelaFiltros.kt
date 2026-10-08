@@ -40,11 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 
-/**
- * "Preferências de descoberta": abre pelo ícone de filtros da tela Descobrir.
- * Reaproveita as seções "Descoberta" e "Descoberta Premium" da tela de
- * Configurações; os valores ficam em Preferencias (compartilhados).
- */
+
 @Composable
 fun TelaFiltros(navController: NavController) {
     var feedback by remember { mutableStateOf<String?>(null) }
@@ -75,7 +71,6 @@ fun TelaFiltros(navController: NavController) {
     }
 }
 
-/** Título à esquerda e botão de confirmar (✓) à direita. */
 @Composable
 private fun CabecalhoFiltros(aoConfirmar: () -> Unit) {
     Row(
@@ -104,7 +99,6 @@ private fun CabecalhoFiltros(aoConfirmar: () -> Unit) {
     }
 }
 
-/** "Como andam suas recomendações ultimamente?" com os botões Nada bom / Bom. */
 @Composable
 private fun CartaoFeedback(escolha: String?, aoEscolher: (String) -> Unit) {
     GrupoCartao {

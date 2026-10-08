@@ -27,11 +27,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 
-/**
- * Tela da categoria (Explorar -> categoria -> aqui): topo com X, nome da
- * categoria e raio, e logo abaixo a MESMA tela do Descobrir, só com as
- * pessoas dessa categoria. A seta pra cima abre as informações com rolagem.
- */
 @Composable
 fun TelaExplorarDetalhe(navController: NavController, categoria: String) {
     val perfis = perfisDaCategoria(categoria)

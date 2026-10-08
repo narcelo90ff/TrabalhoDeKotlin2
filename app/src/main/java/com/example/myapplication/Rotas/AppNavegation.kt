@@ -35,7 +35,6 @@ fun AppNavigation() {
     Scaffold(
         containerColor = Color(0xFF121212),
         bottomBar = {
-            // a barra inferior só aparece nas telas principais, não nas telas de detalhe
             if (rotaTemBottomBar(rotaAtual)) {
                 BottomNavBar(navController = navController)
             }

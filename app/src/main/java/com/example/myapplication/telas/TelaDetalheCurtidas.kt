@@ -64,12 +64,10 @@ fun TelaDetalheCurtida(navController: NavController, pessoaId: Int) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // "a mais" pedido no trabalho: informação CALCULADA a partir dos dados do item
             Text(text = "Compatibilidade estimada: ${calcularCompatibilidade(pessoa.idade)}%")
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // "a mais" nº2: navegação secundária que também mexe na OUTRA lista (Conversas)
             Button(onClick = {
                 val conversa = AppDados.iniciarConversaComPessoa(pessoa)
                 navController.navigate(Rotas.detalheConversa(conversa.id))
@@ -80,7 +78,7 @@ fun TelaDetalheCurtida(navController: NavController, pessoaId: Int) {
     }
 }
 
-/** Cálculo fictício só para exemplo didático, não é ciência nenhuma. */
+/** Cálculo fictício só paa exemplo didático, não é ciência nenhuma. */
 private fun calcularCompatibilidade(idade: Int): Int {
     val base = 100 - abs(idade - 25) * 2
     return base.coerceIn(40, 99)

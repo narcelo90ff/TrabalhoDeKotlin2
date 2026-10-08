@@ -70,7 +70,6 @@ fun TelaListaCurtidas(navController: NavController) {
     var ordem by remember { mutableStateOf("Recomendado") }
     var mostrarOrdenacao by remember { mutableStateOf(false) }
 
-    // a lista muda de ordem conforme a opção escolhida na folha "Organize suas curtidas por"
     val lista = ordenarCurtidas(AppDados.curtidas, ordem)
 
     Box(
@@ -84,7 +83,6 @@ fun TelaListaCurtidas(navController: NavController) {
                 .statusBarsPadding()
                 .padding(horizontal = 16.dp)
         ) {
-            // título + contador
             Row(
                 modifier = Modifier.padding(start = 4.dp, top = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -108,7 +106,6 @@ fun TelaListaCurtidas(navController: NavController) {
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // botão "Recomendado": abre a folha de ordenação
             Row(
                 modifier = Modifier
                     .clip(RoundedCornerShape(50))
@@ -130,7 +127,6 @@ fun TelaListaCurtidas(navController: NavController) {
                 modifier = Modifier.padding(start = 4.dp)
             )
 
-            // grade de 2 colunas, de verdade reativa
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -141,7 +137,6 @@ fun TelaListaCurtidas(navController: NavController) {
                 items(lista, key = { it.id }) { pessoa ->
                     CartaoCurtida(
                         pessoa = pessoa,
-                        // tocar na foto abre o chat direto (cria a conversa se ainda não existir)
                         aoClicar = {
                             val conversa = AppDados.iniciarConversaComPessoa(pessoa)
                             navController.navigate(Rotas.detalheConversa(conversa.id))
@@ -153,7 +148,6 @@ fun TelaListaCurtidas(navController: NavController) {
             }
         }
 
-        // botão amarelo (adicionar uma curtida nova)
         Button(
             onClick = { mostrarDialogo = true },
             colors = ButtonDefaults.buttonColors(
@@ -210,7 +204,6 @@ private fun CartaoCurtida(
             tamanhoLetra = 64.sp
         )
 
-        // sombra embaixo para o texto ler bem
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -219,7 +212,6 @@ private fun CartaoCurtida(
                 .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xE6000000))))
         )
 
-        // favoritar e remover, pequenos no canto de cima
         Row(
             modifier = Modifier
                 .align(Alignment.TopEnd)
@@ -303,7 +295,6 @@ private fun DialogNovaCurtida(
     aoFechar: () -> Unit,
     aoAdicionar: (String, Int, String) -> Unit
 ) {
-    // variáveis de estado do formulário de adicionar
     var nomeNovo by remember { mutableStateOf("") }
     var idadeNova by remember { mutableStateOf("") }
     var bioNova by remember { mutableStateOf("") }
@@ -353,10 +344,6 @@ private fun DialogNovaCurtida(
     )
 }
 
-// =====================================================================
-// ORDENAÇÃO ("Organize suas curtidas por")
-// =====================================================================
-
 private val opcoesOrdem = listOf(
     "Recomendado",
     "Mais recentes",
@@ -365,7 +352,6 @@ private val opcoesOrdem = listOf(
     "Online recentemente"
 )
 
-/** Devolve a lista de curtidas na ordem escolhida. */
 private fun ordenarCurtidas(curtidas: List<Pessoa>, ordem: String): List<Pessoa> = when (ordem) {
     // quem entrou por último (maior id) primeiro
     "Mais recentes" -> curtidas.sortedByDescending { it.id }
@@ -378,7 +364,6 @@ private fun ordenarCurtidas(curtidas: List<Pessoa>, ordem: String): List<Pessoa>
     else -> curtidas.toList() // Recomendado = ordem original
 }
 
-/** Folha de baixo: escolhe a ordem e confirma no ✓ (o ✕ fecha sem mudar nada). */
 @Composable
 private fun SheetOrdenacao(
     ordemAtual: String,
@@ -389,7 +374,6 @@ private fun SheetOrdenacao(
     val escopo = rememberCoroutineScope()
     var escolhida by remember { mutableStateOf(ordemAtual) }
 
-    // fecha com animação e só depois avisa a tela
     fun fechar(depois: () -> Unit = {}) {
         escopo.launch { estadoSheet.hide() }.invokeOnCompletion {
             depois()
@@ -470,7 +454,6 @@ private fun BotaoRedondoSheet(
     }
 }
 
-/** Linha de opção: borda vermelha e ✓ quando é a escolhida. */
 @Composable
 private fun OpcaoOrdem(texto: String, selecionada: Boolean, aoClicar: () -> Unit) {
     val forma = RoundedCornerShape(10.dp)

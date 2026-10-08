@@ -1,9 +1,6 @@
 package com.example.myapplication.navegacao
 
-/**
- * Todas as rotas do app em um só lugar, como pedido no trabalho.
- * As rotas de detalhe levam um argumento (id) de verdade na URL da rota.
- */
+
 object Rotas {
     const val DESCOBRIR = "descobrir"
     const val EXPLORAR = "explorar"

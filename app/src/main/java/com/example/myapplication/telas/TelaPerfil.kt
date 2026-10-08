@@ -73,7 +73,6 @@ private val CorCartaoPerfil = Color(0xFF1E1E1E)
 private val CorTextoFracoPerfil = Color(0xFFB5B5B5)
 private val CorVerdeMusica = Color(0xFF3DAA5C)
 
-/** O tipo de botãozinho que aparece no canto de cada cartão (lápis ou "+"). */
 private enum class AcaoCartao { EDITAR, ADICIONAR }
 
 @Composable
@@ -83,7 +82,6 @@ fun TelaPerfil(navController: NavController) {
             .fillMaxSize()
             .background(Color(0xFF121212))
     ) {
-        // ---------------- conteúdo que rola ----------------
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -91,7 +89,6 @@ fun TelaPerfil(navController: NavController) {
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp)
         ) {
-            // ---- cabeçalho: foto inclinada, nome e "Visualizar" ----
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -125,11 +122,9 @@ fun TelaPerfil(navController: NavController) {
                     }
                     Text("Visualizar  ›", color = CorTextoFracoPerfil, fontSize = 18.sp)
                 }
-                // espaço reservado para os 2 botões redondos que ficam fixos no topo
                 Spacer(modifier = Modifier.width(104.dp))
             }
 
-            // ---- chips de informações (rolam para o lado) ----
             Row(
                 modifier = Modifier
                     .padding(top = 24.dp)
@@ -152,7 +147,6 @@ fun TelaPerfil(navController: NavController) {
                 ChipPerfil(Icons.Filled.Visibility, "Ainda estou decidindo")
             }
 
-            // ---- minhas fotos ----
             TituloSecao("Minhas fotos", topo = 28.dp)
             Column(
                 modifier = Modifier
@@ -166,7 +160,6 @@ fun TelaPerfil(navController: NavController) {
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(18.dp))
                 ) {
-                    // 4 fotos preenchidas (cores de exemplo) e 2 espaços com "+"
                     val coresFotos = listOf(
                         Color(0xFF8A5A44), Color(0xFF445A8A), Color(0xFF5A8A6A), Color(0xFF8A4458)
                     )
@@ -215,7 +208,6 @@ fun TelaPerfil(navController: NavController) {
                 }
             }
 
-            // ---- minhas perguntas ----
             TituloSecao("Minhas perguntas", topo = 28.dp)
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 CartaoPerfilItem(
@@ -277,7 +269,6 @@ fun TelaPerfil(navController: NavController) {
                 Spacer(modifier = Modifier.weight(1f))
             }
 
-            // ---- meus interesses ----
             TituloSecao("Meus interesses", topo = 28.dp)
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 CartaoInteresse(
@@ -327,7 +318,6 @@ fun TelaPerfil(navController: NavController) {
                 Spacer(modifier = Modifier.weight(1f))
             }
 
-            // ---- mais controles de perfil (leva para as Configurações) ----
             Spacer(modifier = Modifier.height(16.dp))
             Row(
                 modifier = Modifier
@@ -348,7 +338,6 @@ fun TelaPerfil(navController: NavController) {
                 Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = CorTextoFracoPerfil)
             }
 
-            // dado real, vindo da mesma fonte de dados usada nas outras telas
             Text(
                 text = "Você tem ${AppDados.curtidas.size} curtidas e " +
                         "${AppDados.conversas.size} conversas.",
@@ -357,11 +346,9 @@ fun TelaPerfil(navController: NavController) {
                 modifier = Modifier.padding(start = 8.dp, top = 16.dp)
             )
 
-            // folga para o banner Gold e a barra de benefícios não cobrirem o final
             Spacer(modifier = Modifier.height(210.dp))
         }
 
-        // ---------------- botões redondos FIXOS no topo ----------------
         Row(
             modifier = Modifier
                 .align(Alignment.TopEnd)
@@ -376,7 +363,6 @@ fun TelaPerfil(navController: NavController) {
             }
         }
 
-        // ---------------- banner Gold + benefícios FIXOS embaixo ----------------
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -482,10 +468,6 @@ private fun ChipPerfil(icone: ImageVector, texto: String) {
     }
 }
 
-/**
- * Cartão escuro do perfil. No canto fica um lápis (editar, quando já tem
- * conteúdo) ou um "+" branco (adicionar, quando está vazio), como no vídeo.
- */
 @Composable
 private fun CartaoPerfilItem(
     modifier: Modifier = Modifier,
@@ -533,7 +515,6 @@ private fun CartaoPerfilItem(
     }
 }
 
-/** Cartão da seção "Meus interesses": preenchido (lápis) ou vazio (+). */
 @Composable
 private fun CartaoInteresse(
     modifier: Modifier = Modifier,

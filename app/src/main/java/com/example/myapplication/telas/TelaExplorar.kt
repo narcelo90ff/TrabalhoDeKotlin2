@@ -37,11 +37,7 @@ import com.example.myapplication.dados.AppDados
 import com.example.myapplication.modelo.Perfil
 import com.example.myapplication.navegacao.Rotas
 
-/**
- * Uma categoria do Explorar. "tipos" diz quais intenções (campo
- * tipoRelacionamento do Perfil) entram nela — assim a categoria mostra
- * só as pessoas que têm a mesma intenção.
- */
+
 private data class CategoriaExplorar(
     val nome: String,
     val emoji: String,
@@ -56,7 +52,6 @@ private val categorias = listOf(
     CategoriaExplorar("Planos pra hoje", "🌙", listOf("Algo casual", "Ainda estou decidindo"))
 )
 
-/** Perfis que combinam com a categoria (usada também na tela da categoria). */
 fun perfisDaCategoria(nomeCategoria: String): List<Perfil> {
     val tipos = categorias.firstOrNull { it.nome == nomeCategoria }?.tipos ?: return emptyList()
     return AppDados.perfis.filter { it.tipoRelacionamento in tipos }
@@ -95,7 +90,6 @@ fun TelaExplorar(navController: NavController) {
             columns = GridCells.Fixed(2),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
-            // folga embaixo para a barra flutuante não cobrir os últimos cards
             contentPadding = PaddingValues(bottom = 110.dp),
             modifier = Modifier.fillMaxSize()
         ) {
@@ -104,7 +98,6 @@ fun TelaExplorar(navController: NavController) {
                     categoria = categoria,
                     quantidade = perfisDaCategoria(categoria.nome).size,
                     aoClicar = {
-                        // Uri.encode porque o nome tem espaços/acentos e vai dentro da rota
                         navController.navigate(Rotas.explorarDetalhe(Uri.encode(categoria.nome)))
                     }
                 )
@@ -124,7 +117,6 @@ private fun CardCategoria(categoria: CategoriaExplorar, quantidade: Int, aoClica
             .clickable(onClick = aoClicar)
             .padding(16.dp)
     ) {
-        // "desenho" da categoria, centralizado na parte de cima
         Box(
             modifier = Modifier
                 .weight(1f)

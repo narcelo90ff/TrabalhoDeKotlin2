@@ -6,13 +6,7 @@ import com.example.myapplication.modelo.Conversa
 import com.example.myapplication.modelo.Perfil
 import com.example.myapplication.modelo.Pessoa
 
-/**
- * "Banco de dados" em memória do app — um objeto (singleton) com duas
- * listas reativas (mutableStateListOf). Qualquer tela pode ler e
- * escrever aqui direto, sem precisar de ViewModel nem de verdadeiro
- * banco de dados. Quando o app fechar, esses dados se perdem — e tudo
- * bem, isso é assunto do próximo trabalho.
- */
+
 object AppDados {
 
     val curtidas = mutableStateListOf(
@@ -35,7 +29,6 @@ object AppDados {
         )
     )
 
-    /** Os 5 perfis (todos inventados) que aparecem na tela Descobrir. */
     val perfis = listOf(
         Perfil(
             id = 1, nome = "Davi", idade = 19, foto = R.drawable.pessoa_1,
@@ -99,10 +92,7 @@ object AppDados {
         )
     )
 
-    /**
-     * Curtir um perfil da tela Descobrir: cria a Pessoa na lista de Curtidas
-     * (só uma vez por perfil) e devolve ela.
-     */
+
     fun curtir(perfil: Perfil, favorito: Boolean = false): Pessoa {
         val existente = perfil.pessoaId?.let { buscarPessoa(it) }
         val pessoa = existente ?: adicionarPessoa(
@@ -154,7 +144,6 @@ object AppDados {
         return nova
     }
 
-    /** Usado pela tela de Detalhe da Curtida para "Iniciar conversa". */
     fun iniciarConversaComPessoa(pessoa: Pessoa): Conversa {
         val existente = conversas.find { it.pessoaId == pessoa.id }
         if (existente != null) return existente

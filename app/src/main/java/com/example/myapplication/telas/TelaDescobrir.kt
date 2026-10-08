@@ -88,11 +88,7 @@ fun TelaDescobrir(navController: NavController) {
     DeslizarPerfis(perfis = AppDados.perfis, navController = navController)
 }
 
-/**
- * Tela de curtir pessoas (foto cheia + seta pra cima com as informações).
- * É usada na aba Descobrir (todos os perfis) e também no Explorar
- * (só os perfis da categoria escolhida), por isso recebe a lista pronta.
- */
+
 @Composable
 fun DeslizarPerfis(
     perfis: List<Perfil>,
@@ -100,17 +96,14 @@ fun DeslizarPerfis(
     mostrarAbas: Boolean = true,
     mostrarInteresses: Boolean = false
 ) {
-    // qual perfil está na tela e se a tela de detalhes (seta pra cima) está aberta
     var indice by rememberSaveable { mutableIntStateOf(0) }
     var mostrandoDetalhe by rememberSaveable { mutableStateOf(false) }
 
-    // só aparece a tela "sem perfis" se a lista estiver vazia (ex.: categoria sem ninguém)
     if (perfis.isEmpty()) {
         TelaSemPerfis(onRecomecar = { indice = 0 })
         return
     }
 
-    // LOOP: o índice sempre dá a volta, então depois do último perfil volta pro primeiro
     val perfil = perfis[indice.mod(perfis.size)]
 
     fun proximo() {
@@ -118,7 +111,6 @@ fun DeslizarPerfis(
         indice = (indice.mod(perfis.size) + 1) % perfis.size
     }
 
-    // interação de verdade: curtir adiciona a pessoa na lista de Curtidas
     val aoPassar: () -> Unit = { proximo() }
     val aoCurtir: () -> Unit = {
         AppDados.curtir(perfil)
@@ -129,11 +121,9 @@ fun DeslizarPerfis(
         proximo()
     }
     val aoVoltar: () -> Unit = {
-        // também dá a volta: do primeiro perfil volta pro último
         mostrandoDetalhe = false
         indice = (indice.mod(perfis.size) - 1 + perfis.size) % perfis.size
     }
-    // curtir + abrir a conversa com a pessoa
     val aoResponder: () -> Unit = {
         val pessoa = AppDados.curtir(perfil)
         val conversa = AppDados.iniciarConversaComPessoa(pessoa)
@@ -166,9 +156,6 @@ fun DeslizarPerfis(
     }
 }
 
-// ---------------------------------------------------------------------------
-// Tela 1: foto cheia
-// ---------------------------------------------------------------------------
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -198,7 +185,6 @@ private fun FotoPerfil(
             modifier = Modifier.fillMaxSize()
         )
 
-        // sombra em cima (abas) e embaixo (nome e botões) para o texto ler bem
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -214,7 +200,6 @@ private fun FotoPerfil(
                 .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xE6000000))))
         )
 
-        // abas do topo (no Explorar elas não aparecem)
         if (mostrarAbas) {
             Row(
                 modifier = Modifier
@@ -254,7 +239,6 @@ private fun FotoPerfil(
 
         }
 
-        // nome, distância, seta pra cima e botões
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -295,7 +279,6 @@ private fun FotoPerfil(
                         }
                     }
                 }
-                // a setinha pra cima: abre as informações do perfil
                 BotaoCirculo(
                     icone = Icons.Filled.ArrowUpward,
                     tamanho = 52.dp,
@@ -346,9 +329,6 @@ private fun FotoPerfil(
     }
 }
 
-// ---------------------------------------------------------------------------
-// Tela 2: informações do perfil (abre com a setinha pra cima)
-// ---------------------------------------------------------------------------
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -367,7 +347,6 @@ private fun DetalhePerfil(
                 .statusBarsPadding()
                 .padding(horizontal = 12.dp)
         ) {
-            // cabeçalho FIXO com nome, idade e a setinha pra baixo
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -390,7 +369,6 @@ private fun DetalhePerfil(
                 )
             }
 
-            // tudo daqui pra baixo ROLA: a foto e depois todas as informações
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -425,7 +403,6 @@ private fun DetalhePerfil(
                     }
                 }
 
-                // Tô procurando
                 Cartao {
                     CabecalhoSecao(Icons.Filled.Search, perfil.procurando, comMenu = false)
                     Spacer(modifier = Modifier.height(12.dp))
@@ -436,7 +413,6 @@ private fun DetalhePerfil(
                     Chip("Monogamia")
                 }
 
-                // Sobre mim
                 Cartao {
                     CabecalhoSecao(Icons.Filled.FormatQuote, "Sobre mim", comMenu = true)
                     Spacer(modifier = Modifier.height(12.dp))
@@ -444,7 +420,6 @@ private fun DetalhePerfil(
                     BotaoResponderLinha(aoResponder)
                 }
 
-                // Informações básicas
                 Cartao {
                     CabecalhoSecao(Icons.Filled.Person, "Informações básicas", comMenu = true)
                     Spacer(modifier = Modifier.height(12.dp))
@@ -455,7 +430,6 @@ private fun DetalhePerfil(
                     BotaoResponderLinha(aoResponder)
                 }
 
-                // Pergunta e resposta
                 Cartao {
                     CabecalhoSecao(Icons.Filled.FormatQuote, perfil.pergunta, comMenu = true)
                     Spacer(modifier = Modifier.height(12.dp))
@@ -463,7 +437,6 @@ private fun DetalhePerfil(
                     BotaoResponderLinha(aoResponder)
                 }
 
-                // Estilo de vida
                 Cartao {
                     CabecalhoSecao(Icons.Filled.LocalOffer, "Estilo de vida", comMenu = false)
                     Spacer(modifier = Modifier.height(12.dp))
@@ -474,7 +447,6 @@ private fun DetalhePerfil(
                     BotaoResponderLinha(aoResponder)
                 }
 
-                // Mais informações
                 Cartao {
                     CabecalhoSecao(Icons.Filled.LocalOffer, "Mais informações", comMenu = false)
                     Spacer(modifier = Modifier.height(12.dp))
@@ -483,7 +455,6 @@ private fun DetalhePerfil(
                     BotaoResponderLinha(aoResponder)
                 }
 
-                // Interesses (os 2 primeiros em rosa = em comum com você)
                 Cartao {
                     CabecalhoSecao(Icons.Filled.Favorite, "Interesses", comMenu = false)
                     Spacer(modifier = Modifier.height(16.dp))
@@ -506,7 +477,6 @@ private fun DetalhePerfil(
             }
         }
 
-        // botões fixos embaixo (não curtir, favoritar, curtir)
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -527,9 +497,6 @@ private fun DetalhePerfil(
     }
 }
 
-// ---------------------------------------------------------------------------
-// Tela quando acabam os perfis
-// ---------------------------------------------------------------------------
 
 @Composable
 private fun TelaSemPerfis(onRecomecar: () -> Unit) {
@@ -559,9 +526,6 @@ private fun TelaSemPerfis(onRecomecar: () -> Unit) {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Pedacinhos reutilizáveis
-// ---------------------------------------------------------------------------
 
 @Composable
 private fun BotaoCirculo(

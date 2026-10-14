@@ -14,7 +14,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.myapplication.componentes.BottomNavBar
 import com.example.myapplication.componentes.rotaTemBottomBar
+import com.example.myapplication.telas.TelaAstrologia
 import com.example.myapplication.telas.TelaConfiguracoes
+import com.example.myapplication.telas.TelaDoubleDateConfig
 import com.example.myapplication.telas.TelaDescobrir
 import com.example.myapplication.telas.TelaDetalheConversa
 import com.example.myapplication.telas.TelaDetalheCurtida
@@ -25,6 +27,9 @@ import com.example.myapplication.telas.TelaFiltros
 import com.example.myapplication.telas.TelaListaConversas
 import com.example.myapplication.telas.TelaListaCurtidas
 import com.example.myapplication.telas.TelaPerfil
+import com.example.myapplication.telas.TelaAssinatura
+import com.example.myapplication.telas.TelaCompra
+import com.example.myapplication.telas.TelaLocalizacao
 
 @Composable
 fun AppNavigation() {
@@ -84,11 +89,34 @@ fun AppNavigation() {
             composable(Rotas.DOUBLE_DATE) {
                 TelaDoubleDate(navController = navController)
             }
+            composable(Rotas.DOUBLE_DATE_CONFIG) {
+                TelaDoubleDateConfig(navController = navController)
+            }
+            composable(Rotas.ASTROLOGIA) {
+                TelaAstrologia(navController = navController)
+            }
             composable(Rotas.CONFIGURACOES) {
                 TelaConfiguracoes(navController = navController)
             }
             composable(Rotas.FILTROS) {
                 TelaFiltros(navController = navController)
+            }
+            composable(Rotas.LOCALIZACAO) {
+                TelaLocalizacao(navController = navController)
+            }
+            composable(
+                route = Rotas.ASSINATURA,
+                arguments = listOf(navArgument("plano") { type = NavType.StringType })
+            ) { entrada ->
+                val plano = entrada.arguments?.getString("plano") ?: "PLUS"
+                TelaAssinatura(navController = navController, plano = plano)
+            }
+            composable(
+                route = Rotas.COMPRA,
+                arguments = listOf(navArgument("tipo") { type = NavType.StringType })
+            ) { entrada ->
+                val tipo = entrada.arguments?.getString("tipo") ?: "BOOST"
+                TelaCompra(navController = navController, tipo = tipo)
             }
         }
     }

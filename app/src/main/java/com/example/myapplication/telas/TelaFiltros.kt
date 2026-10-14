@@ -39,11 +39,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.myapplication.componentes.BarraRolagem
+import com.example.myapplication.navegacao.Rotas
 
 
 @Composable
 fun TelaFiltros(navController: NavController) {
     var feedback by remember { mutableStateOf<String?>(null) }
+    val estadoRolagem = rememberScrollState()
 
     Column(
         modifier = Modifier
@@ -53,20 +56,22 @@ fun TelaFiltros(navController: NavController) {
     ) {
         CabecalhoFiltros(aoConfirmar = { navController.popBackStack() })
 
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp)
-        ) {
-            Spacer(modifier = Modifier.height(8.dp))
-            CartaoFeedback(escolha = feedback, aoEscolher = { feedback = it })
+        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(estadoRolagem)
+                    .padding(horizontal = 16.dp)
+            ) {
+                Spacer(modifier = Modifier.height(8.dp))
+                CartaoFeedback(escolha = feedback, aoEscolher = { feedback = it })
 
-            SecaoDescoberta()
-            SecaoDescobertaPremium()
+                SecaoDescoberta(aoAbrirLocalizacao = { navController.navigate(Rotas.LOCALIZACAO) })
+                SecaoDescobertaPremium()
 
-            Spacer(modifier = Modifier.navigationBarsPadding().height(32.dp))
+                Spacer(modifier = Modifier.navigationBarsPadding().height(32.dp))
+            }
+            BarraRolagem(estado = estadoRolagem, modifier = Modifier.align(Alignment.CenterEnd))
         }
     }
 }

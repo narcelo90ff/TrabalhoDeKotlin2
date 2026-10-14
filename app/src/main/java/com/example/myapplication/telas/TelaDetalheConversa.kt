@@ -55,6 +55,7 @@ import com.example.myapplication.dados.AppDados
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.example.myapplication.componentes.BarraRolagem
 
 private val CorFundoChat = Color(0xFF121212)
 private val CorBotaoChat = Color(0xFF1E1E1E)
@@ -147,66 +148,68 @@ fun TelaDetalheConversa(navController: NavController, conversaId: Int) {
             }
         }
 
-        LazyColumn(
-            state = estadoLista,
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Bottom)
-        ) {
-            item {
-                Text(
-                    text = "Você deu match com ${conversa.nome} em $dataMatch",
-                    color = CorTextoFracoChat,
-                    fontSize = 12.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 12.dp)
-                )
-            }
-            item {
-                Text(
-                    text = dataHora,
-                    color = CorTextoFracoChat,
-                    fontSize = 12.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-            if (temFotoNaIntro) {
+        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            LazyColumn(
+                state = estadoLista,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Bottom)
+            ) {
                 item {
+                    Text(
+                        text = "Você deu match com ${conversa.nome} em $dataMatch",
+                        color = CorTextoFracoChat,
+                        fontSize = 12.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp)
+                    )
+                }
+                item {
+                    Text(
+                        text = dataHora,
+                        color = CorTextoFracoChat,
+                        fontSize = 12.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                if (temFotoNaIntro) {
+                    item {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.End
+                        ) {
+                            Image(
+                                painter = painterResource(id = pessoa!!.foto!!),
+                                contentDescription = "Foto de ${conversa.nome}",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(width = 86.dp, height = 104.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            BalaoChat("Você curtiu a foto do(a) ${conversa.nome}", minha = true)
+                            Text("Enviado", color = CorTextoFracoChat, fontSize = 11.sp)
+                        }
+                    }
+                }
+                itemsIndexed(conversa.mensagens) { indice, mensagem ->
+                    val minha = indice in conversa.minhasMensagens
                     Column(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.End
+                        horizontalAlignment = if (minha) Alignment.End else Alignment.Start
                     ) {
-                        Image(
-                            painter = painterResource(id = pessoa!!.foto!!),
-                            contentDescription = "Foto de ${conversa.nome}",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .size(width = 86.dp, height = 104.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        BalaoChat("Você curtiu a foto do(a) ${conversa.nome}", minha = true)
-                        Text("Enviado", color = CorTextoFracoChat, fontSize = 11.sp)
+                        BalaoChat(mensagem, minha = minha)
+                        if (minha && indice == conversa.minhasMensagens.lastOrNull()) {
+                            Text("Enviado", color = CorTextoFracoChat, fontSize = 11.sp)
+                        }
                     }
                 }
             }
-            itemsIndexed(conversa.mensagens) { indice, mensagem ->
-                val minha = indice in conversa.minhasMensagens
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = if (minha) Alignment.End else Alignment.Start
-                ) {
-                    BalaoChat(mensagem, minha = minha)
-                    if (minha && indice == conversa.minhasMensagens.lastOrNull()) {
-                        Text("Enviado", color = CorTextoFracoChat, fontSize = 11.sp)
-                    }
-                }
-            }
+            BarraRolagem(estado = estadoLista, modifier = Modifier.align(Alignment.CenterEnd))
         }
 
         Row(

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,9 +31,11 @@ import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.FormatQuote
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.LocalBar
 import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.material.icons.filled.LocationOn
@@ -67,13 +70,21 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.myapplication.dados.AppDados
+import com.example.myapplication.dados.AbaDescobrir
+import com.example.myapplication.dados.Astrologia
+import com.example.myapplication.dados.DescobrirEstado
 import com.example.myapplication.modelo.Perfil
 import com.example.myapplication.navegacao.Rotas
+import com.example.myapplication.componentes.BarraRolagem
 
 private val CorCartao = Color(0xFF1A1A1A)
 private val CorChip = Color(0xFF0B0B0B)
@@ -104,7 +115,12 @@ fun DeslizarPerfis(
         return
     }
 
-    val perfil = perfis[indice.mod(perfis.size)]
+    val aba = if (mostrarAbas) DescobrirEstado.aba else AbaDescobrir.PRA_VOCE
+    val posicao = indice.mod(perfis.size)
+    val perfil = perfis[posicao]
+    // no Double Date cada card mostra uma dupla: o perfil atual + o próximo da lista
+    val parceiro: Perfil? =
+        if (aba == AbaDescobrir.DOUBLE_DATE && perfis.size > 1) perfis[(posicao + 1) % perfis.size] else null
 
     fun proximo() {
         mostrandoDetalhe = false
@@ -114,10 +130,12 @@ fun DeslizarPerfis(
     val aoPassar: () -> Unit = { proximo() }
     val aoCurtir: () -> Unit = {
         AppDados.curtir(perfil)
+        parceiro?.let { AppDados.curtir(it) }
         proximo()
     }
     val aoFavoritar: () -> Unit = {
         AppDados.curtir(perfil, favorito = true)
+        parceiro?.let { AppDados.curtir(it) }
         proximo()
     }
     val aoVoltar: () -> Unit = {
@@ -129,6 +147,31 @@ fun DeslizarPerfis(
         val conversa = AppDados.iniciarConversaComPessoa(pessoa)
         navController.navigate(Rotas.detalheConversa(conversa.id))
     }
+    fun mudarAba(nova: AbaDescobrir) {
+        mostrandoDetalhe = false
+        when (nova) {
+            AbaDescobrir.PRA_VOCE -> {
+                DescobrirEstado.aba = nova
+            }
+            AbaDescobrir.DOUBLE_DATE -> {
+                DescobrirEstado.aba = nova
+                // na primeira vez abre a tela de convidar amigos
+                if (!DescobrirEstado.conviteDoubleDateVisto) {
+                    DescobrirEstado.conviteDoubleDateVisto = true
+                    navController.navigate(Rotas.DOUBLE_DATE)
+                }
+            }
+            AbaDescobrir.ASTROLOGIA -> {
+                // ainda não configurou: abre o fluxo; senão só troca de aba
+                if (Astrologia.ativo) {
+                    DescobrirEstado.aba = nova
+                } else {
+                    navController.navigate(Rotas.ASTROLOGIA)
+                }
+            }
+        }
+    }
+    val aoMudarAba: (AbaDescobrir) -> Unit = { mudarAba(it) }
 
     if (mostrandoDetalhe) {
         DetalhePerfil(
@@ -142,8 +185,12 @@ fun DeslizarPerfis(
     } else {
         FotoPerfil(
             perfil = perfil,
+            parceiro = parceiro,
+            aba = aba,
             aoAbrirDetalhe = { mostrandoDetalhe = true },
-            aoDoubleDate = { navController.navigate(Rotas.DOUBLE_DATE) },
+            aoMudarAba = aoMudarAba,
+            aoEditarAstrologia = { navController.navigate(Rotas.ASTROLOGIA) },
+            aoTestarDoubleDate = { navController.navigate(Rotas.DOUBLE_DATE) },
             aoFiltros = { navController.navigate(Rotas.FILTROS) },
             aoVoltar = aoVoltar,
             aoPassar = aoPassar,
@@ -161,8 +208,12 @@ fun DeslizarPerfis(
 @Composable
 private fun FotoPerfil(
     perfil: Perfil,
+    parceiro: Perfil?,
+    aba: AbaDescobrir,
     aoAbrirDetalhe: () -> Unit,
-    aoDoubleDate: () -> Unit,
+    aoMudarAba: (AbaDescobrir) -> Unit,
+    aoEditarAstrologia: () -> Unit,
+    aoTestarDoubleDate: () -> Unit,
     aoFiltros: () -> Unit,
     aoVoltar: () -> Unit,
     aoPassar: () -> Unit,
@@ -172,18 +223,38 @@ private fun FotoPerfil(
     mostrarAbas: Boolean,
     mostrarInteresses: Boolean
 ) {
+    val noAstrologia = aba == AbaDescobrir.ASTROLOGIA && !mostrarInteresses
+    val textoCompat = if (noAstrologia) Astrologia.compatibilidade(perfil.signo) else null
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 4.dp)
             .clip(RoundedCornerShape(28.dp))
     ) {
-        Image(
-            painter = painterResource(id = perfil.foto),
-            contentDescription = "Foto de ${perfil.nome}",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
-        )
+        if (parceiro != null) {
+            Row(modifier = Modifier.fillMaxSize()) {
+                Image(
+                    painter = painterResource(id = perfil.foto),
+                    contentDescription = "Foto de ${perfil.nome}",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.weight(1f).fillMaxHeight()
+                )
+                Image(
+                    painter = painterResource(id = parceiro.foto),
+                    contentDescription = "Foto de ${parceiro.nome}",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.weight(1f).fillMaxHeight()
+                )
+            }
+        } else {
+            Image(
+                painter = painterResource(id = perfil.foto),
+                contentDescription = "Foto de ${perfil.nome}",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
 
         Box(
             modifier = Modifier
@@ -195,7 +266,7 @@ private fun FotoPerfil(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(if (mostrarInteresses) 400.dp else 320.dp)
+                .height(if (mostrarInteresses) 400.dp else 340.dp)
                 .align(Alignment.BottomCenter)
                 .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xE6000000))))
         )
@@ -205,7 +276,7 @@ private fun FotoPerfil(
                 modifier = Modifier
                     .fillMaxWidth()
                     .statusBarsPadding()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                    .padding(horizontal = 8.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -217,23 +288,14 @@ private fun FotoPerfil(
                         .size(28.dp)
                         .clickable(onClick = aoFiltros)
                 )
-                Text(
-                    text = "Pra você",
-                    color = Color.White,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(50))
-                        .background(Color(0x66000000))
-                        .padding(horizontal = 16.dp, vertical = 10.dp)
+                ItemAba("Pra você", aba == AbaDescobrir.PRA_VOCE, { aoMudarAba(AbaDescobrir.PRA_VOCE) })
+                ItemAba("Double Date", aba == AbaDescobrir.DOUBLE_DATE, { aoMudarAba(AbaDescobrir.DOUBLE_DATE) })
+                ItemAba(
+                    texto = "Astrologia",
+                    selecionada = aba == AbaDescobrir.ASTROLOGIA,
+                    aoClicar = { aoMudarAba(AbaDescobrir.ASTROLOGIA) },
+                    aoEditar = if (aba == AbaDescobrir.ASTROLOGIA && Astrologia.ativo) aoEditarAstrologia else null
                 )
-                Text(
-                    text = "Double Date",
-                    color = Color.White,
-                    fontSize = 15.sp,
-                    modifier = Modifier.clickable { aoDoubleDate() }
-                )
-                Text(text = "Astrologia", color = Color.White, fontSize = 15.sp)
                 Icon(Icons.Filled.Bolt, contentDescription = null, tint = Color(0xFFD38CF0), modifier = Modifier.size(26.dp))
             }
 
@@ -245,40 +307,69 @@ private fun FotoPerfil(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 20.dp)
         ) {
-            Text(
-                text = "Perto de mim",
-                color = Color.Black,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .background(Color.White)
-                    .padding(horizontal = 12.dp, vertical = 6.dp)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+            if (parceiro == null) {
+                Text(
+                    text = "Perto de mim",
+                    color = Color.Black,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(Color.White)
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Column {
-                    Row(verticalAlignment = Alignment.Bottom) {
-                        Text(perfil.nome, color = Color.White, fontSize = 34.sp, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(perfil.idade.toString(), color = Color.White, fontSize = 30.sp)
-                        if (mostrarInteresses) {
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Icon(Icons.Filled.Verified, contentDescription = "Verificado", tint = Color.White, modifier = Modifier.size(24.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    if (parceiro != null) {
+                        Text(
+                            text = "${perfil.nome} ${perfil.idade} e ${parceiro.nome} ${parceiro.idade}",
+                            color = Color.White,
+                            fontSize = 26.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    } else {
+                        Row(verticalAlignment = Alignment.Bottom) {
+                            Text(perfil.nome, color = Color.White, fontSize = 34.sp, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(perfil.idade.toString(), color = Color.White, fontSize = 30.sp)
+                            if (mostrarInteresses) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Icon(Icons.Filled.Verified, contentDescription = "Verificado", tint = Color.White, modifier = Modifier.size(24.dp))
+                            }
                         }
                     }
-                    if (!mostrarInteresses) {
+                    if (!mostrarInteresses && aba == AbaDescobrir.PRA_VOCE) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Filled.LocationOn, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(perfil.distancia, color = Color.White, fontSize = 16.sp)
                         }
                     }
+                    if (noAstrologia) {
+                        val indiceSigno = Astrologia.SIGNOS.indexOf(perfil.signo)
+                        val simbolo = if (indiceSigno >= 0) Astrologia.SIMBOLOS[indiceSigno] else ""
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "$simbolo ${perfil.signo}",
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(50))
+                                .background(Color(0x66000000))
+                                .padding(horizontal = 10.dp, vertical = 4.dp)
+                        )
+                    }
                 }
+                Spacer(modifier = Modifier.width(12.dp))
                 BotaoCirculo(
                     icone = Icons.Filled.ArrowUpward,
                     tamanho = 52.dp,
@@ -286,6 +377,28 @@ private fun FotoPerfil(
                     corIcone = Color.Black,
                     descricao = "Ver perfil completo",
                     aoClicar = aoAbrirDetalhe
+                )
+            }
+            if (textoCompat != null) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = buildAnnotatedString {
+                        withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                            append(Astrologia.tituloCompatibilidade(perfil.signo) + " • ")
+                        }
+                        append(textoCompat)
+                    },
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = "Ver mais >",
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clickable { aoAbrirDetalhe() }.padding(top = 4.dp)
                 )
             }
             if (mostrarInteresses) {
@@ -313,6 +426,25 @@ private fun FotoPerfil(
                     }
                 }
             }
+            if (parceiro != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color(0xE61A1A1A))
+                        .clickable { aoTestarDoubleDate() }
+                        .padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Filled.Link, contentDescription = null, tint = Color.White, modifier = Modifier.size(22.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text("Testar Double Date", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                        Text("Dê match e converse com outras duplas.", color = CorTextoFraco, fontSize = 13.sp)
+                    }
+                }
+            }
             Spacer(modifier = Modifier.height(16.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -329,6 +461,40 @@ private fun FotoPerfil(
     }
 }
 
+/** Uma aba do topo (Pra você / Double Date / Astrologia). A selecionada ganha o fundo escuro. */
+@Composable
+private fun ItemAba(
+    texto: String,
+    selecionada: Boolean,
+    aoClicar: () -> Unit,
+    aoEditar: (() -> Unit)? = null
+) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(if (selecionada) Color(0x66000000) else Color.Transparent)
+            .clickable { aoClicar() }
+            .padding(horizontal = 10.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = texto,
+            color = Color.White,
+            fontSize = 14.sp,
+            fontWeight = if (selecionada) FontWeight.Bold else FontWeight.Normal
+        )
+        if (aoEditar != null) {
+            Spacer(modifier = Modifier.width(6.dp))
+            Icon(
+                Icons.Filled.Edit,
+                contentDescription = "Editar dados de astrologia",
+                tint = Color.White,
+                modifier = Modifier.size(16.dp).clickable { aoEditar() }
+            )
+        }
+    }
+}
+
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -340,6 +506,7 @@ private fun DetalhePerfil(
     aoCurtir: () -> Unit,
     aoResponder: () -> Unit
 ) {
+    val estadoRolagem = rememberScrollState()
     Box(modifier = Modifier.fillMaxSize().background(Color(0xFF111111))) {
         Column(
             modifier = Modifier
@@ -372,7 +539,7 @@ private fun DetalhePerfil(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(estadoRolagem)
             ) {
                 Box(
                     modifier = Modifier
@@ -476,6 +643,15 @@ private fun DetalhePerfil(
                 Spacer(modifier = Modifier.height(130.dp))
             }
         }
+
+        // barra de rolagem que dá pra segurar e arrastar (entre o cabeçalho e os botões)
+        BarraRolagem(
+            estado = estadoRolagem,
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .statusBarsPadding()
+                .padding(top = 80.dp, bottom = 120.dp)
+        )
 
         Box(
             modifier = Modifier

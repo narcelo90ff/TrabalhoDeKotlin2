@@ -68,6 +68,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.myapplication.dados.Preferencias
 import kotlin.math.roundToInt
+import com.example.myapplication.componentes.BarraRolagem
+import com.example.myapplication.navegacao.Rotas
 
 
 internal val CfgFundo = Color.Black
@@ -88,6 +90,7 @@ fun TelaConfiguracoes(navController: NavController) {
     var descobertaAtiva by remember { mutableStateOf(true) }
     var chatVerificacao by remember { mutableStateOf(false) }
     var modoEscuro by remember { mutableStateOf("Usar configuração do sistema") }
+    val estadoRolagem = rememberScrollState()
 
     Column(
         modifier = Modifier
@@ -97,31 +100,33 @@ fun TelaConfiguracoes(navController: NavController) {
     ) {
         BarraTopoConfig(aoConfirmar = { navController.popBackStack() })
 
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp)
-        ) {
-            SecaoPlanos()
-            SecaoConta()
-            SecaoDescobertaPremium()
-            SecaoDescoberta()
-            SecaoVisibilidade(
-                visibilidade = visibilidade,
-                aoEscolher = { visibilidade = it },
-                descobertaAtiva = descobertaAtiva,
-                aoMudarDescoberta = { descobertaAtiva = it }
-            )
-            SecaoMensagens(
-                chatVerificacao = chatVerificacao,
-                aoMudarChat = { chatVerificacao = it }
-            )
-            SecaoGeral()
-            SecaoNotificacoes()
-            SecaoModoEscuro(selecionado = modoEscuro, aoEscolher = { modoEscuro = it })
-            SecaoRodape()
+        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(estadoRolagem)
+                    .padding(horizontal = 16.dp)
+            ) {
+                SecaoPlanos(navController)
+                SecaoConta()
+                SecaoDescobertaPremium()
+                SecaoDescoberta(aoAbrirLocalizacao = { navController.navigate(Rotas.LOCALIZACAO) })
+                SecaoVisibilidade(
+                    visibilidade = visibilidade,
+                    aoEscolher = { visibilidade = it },
+                    descobertaAtiva = descobertaAtiva,
+                    aoMudarDescoberta = { descobertaAtiva = it }
+                )
+                SecaoMensagens(
+                    chatVerificacao = chatVerificacao,
+                    aoMudarChat = { chatVerificacao = it }
+                )
+                SecaoGeral()
+                SecaoNotificacoes()
+                SecaoModoEscuro(selecionado = modoEscuro, aoEscolher = { modoEscuro = it })
+                SecaoRodape()
+            }
+            BarraRolagem(estado = estadoRolagem, modifier = Modifier.align(Alignment.CenterEnd))
         }
     }
 }
@@ -158,23 +163,39 @@ private fun BarraTopoConfig(aoConfirmar: () -> Unit) {
 
 
 @Composable
-private fun SecaoPlanos() {
+private fun SecaoPlanos(navController: NavController) {
     Spacer(modifier = Modifier.height(8.dp))
-    CartaoPlano("PLATINUM", CfgPlatina, Color.Black, "Use as curtidas prioritárias, veja quem curtiu você e muito mais!")
+    CartaoPlano("PLATINUM", CfgPlatina, Color.Black, "Use as curtidas prioritárias, veja quem curtiu você e muito mais!") {
+        navController.navigate(Rotas.assinatura("PLATINUM"))
+    }
     Spacer(modifier = Modifier.height(10.dp))
-    CartaoPlano("GOLD", CfgDourado, Color.Black, "Veja quem curtiu você e mais!")
+    CartaoPlano("GOLD", CfgDourado, Color.Black, "Veja quem curtiu você e mais!") {
+        navController.navigate(Rotas.assinatura("GOLD"))
+    }
     Spacer(modifier = Modifier.height(10.dp))
-    CartaoPlano("PLUS", CfgVermelho, Color.White, "Curtidas ilimitadas e mais!")
+    CartaoPlano("PLUS", CfgVermelho, Color.White, "Curtidas ilimitadas e mais!") {
+        navController.navigate(Rotas.assinatura("PLUS"))
+    }
     Spacer(modifier = Modifier.height(10.dp))
 
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        CartaoAtalho(Icons.Filled.Star, Color(0xFF6C8CFF), "Quero Super Likes", Modifier.weight(1f))
-        CartaoAtalho(Icons.Filled.Bolt, Color(0xFFD38CF0), "Quero Boosts", Modifier.weight(1f))
+        CartaoAtalho(Icons.Filled.Star, Color(0xFF6C8CFF), "Quero Super Likes", Modifier.weight(1f)) {
+            navController.navigate(Rotas.compra("SUPERLIKE"))
+        }
+        CartaoAtalho(Icons.Filled.Bolt, Color(0xFFD38CF0), "Quero Boosts", Modifier.weight(1f)) {
+            navController.navigate(Rotas.compra("BOOST"))
+        }
     }
     Spacer(modifier = Modifier.height(10.dp))
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        CartaoAtalho(Icons.Filled.VisibilityOff, Color.White, "Usar modo anônimo", Modifier.weight(1f))
-        CartaoAtalho(Icons.Filled.Flight, CfgVermelho, "Usar o Modo Passaporte", Modifier.weight(1f))
+        // o modo anônimo é do plano Plus: abre a tela de assinatura dele
+        CartaoAtalho(Icons.Filled.VisibilityOff, Color.White, "Usar modo anônimo", Modifier.weight(1f)) {
+            navController.navigate(Rotas.assinatura("ANONIMO"))
+        }
+        // o Passaporte leva para a escolha de localização
+        CartaoAtalho(Icons.Filled.Flight, CfgVermelho, "Usar o Modo Passaporte", Modifier.weight(1f)) {
+            navController.navigate(Rotas.LOCALIZACAO)
+        }
     }
 }
 
@@ -243,13 +264,14 @@ internal fun SecaoDescobertaPremium() {
 }
 
 @Composable
-internal fun SecaoDescoberta() {
+internal fun SecaoDescoberta(aoAbrirLocalizacao: () -> Unit = { }) {
     TituloSecao("Descoberta")
     GrupoCartao {
         LinhaNavegacao(
             rotulo = "Localização",
-            valor = "Curitiba, PR",
-            ajuda = "Mude a localização pra dar matches em qualquer lugar."
+            valor = Preferencias.localAtual,
+            ajuda = "Mude a localização pra dar matches em qualquer lugar.",
+            aoClicar = aoAbrirLocalizacao
         )
         DivisorFino()
         LinhaSlider(
@@ -511,13 +533,19 @@ internal fun DivisorFino() {
 }
 
 @Composable
-private fun CartaoPlano(selo: String, corSelo: Color, corTextoSelo: Color, descricao: String) {
+private fun CartaoPlano(
+    selo: String,
+    corSelo: Color,
+    corTextoSelo: Color,
+    descricao: String,
+    aoClicar: () -> Unit = { }
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(CfgCartao)
-            .clickable { }
+            .clickable(onClick = aoClicar)
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -532,12 +560,18 @@ private fun CartaoPlano(selo: String, corSelo: Color, corTextoSelo: Color, descr
 }
 
 @Composable
-private fun CartaoAtalho(icone: ImageVector, corIcone: Color, texto: String, modifier: Modifier = Modifier) {
+private fun CartaoAtalho(
+    icone: ImageVector,
+    corIcone: Color,
+    texto: String,
+    modifier: Modifier = Modifier,
+    aoClicar: () -> Unit = { }
+) {
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(20.dp))
             .background(CfgCartao)
-            .clickable { }
+            .clickable(onClick = aoClicar)
             .padding(vertical = 18.dp, horizontal = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {

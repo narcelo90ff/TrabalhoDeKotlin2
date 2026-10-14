@@ -63,6 +63,8 @@ import com.example.myapplication.dados.AppDados
 import com.example.myapplication.modelo.Pessoa
 import com.example.myapplication.navegacao.Rotas
 import kotlinx.coroutines.launch
+import com.example.myapplication.componentes.BarraRolagem
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 
 @Composable
 fun TelaListaCurtidas(navController: NavController) {
@@ -71,6 +73,7 @@ fun TelaListaCurtidas(navController: NavController) {
     var mostrarOrdenacao by remember { mutableStateOf(false) }
 
     val lista = ordenarCurtidas(AppDados.curtidas, ordem)
+    val estadoGrade = rememberLazyGridState()
 
     Box(
         modifier = Modifier
@@ -128,6 +131,7 @@ fun TelaListaCurtidas(navController: NavController) {
             )
 
             LazyVerticalGrid(
+                state = estadoGrade,
                 columns = GridCells.Fixed(2),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -147,6 +151,15 @@ fun TelaListaCurtidas(navController: NavController) {
                 }
             }
         }
+
+        // barra de rolagem que dá pra segurar e arrastar (no cantinho, fora dos cartões)
+        BarraRolagem(
+            estado = estadoGrade,
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .statusBarsPadding()
+                .padding(top = 200.dp, bottom = 100.dp)
+        )
 
         Button(
             onClick = { mostrarDialogo = true },

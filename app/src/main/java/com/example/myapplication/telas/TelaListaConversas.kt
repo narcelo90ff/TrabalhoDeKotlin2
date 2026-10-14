@@ -54,6 +54,8 @@ import com.example.myapplication.dados.AppDados
 import com.example.myapplication.modelo.Conversa
 import com.example.myapplication.modelo.Pessoa
 import com.example.myapplication.navegacao.Rotas
+import com.example.myapplication.componentes.BarraRolagem
+import androidx.compose.foundation.lazy.rememberLazyListState
 
 private val AmareloChat = Color(0xFFF2B600)
 private val CorFracaChat = Color(0xFFB5B5B5)
@@ -247,34 +249,40 @@ private fun PainelMensagens(navController: NavController, modifier: Modifier = M
             modifier = Modifier.padding(start = 16.dp, top = 20.dp, bottom = 8.dp)
         )
 
-        LazyColumn(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-            contentPadding = PaddingValues(bottom = 110.dp)
-        ) {
-            item {
-                LinhaMensagemDoApp(aoClicar = {
-                    navController.navigate(Rotas.PERFIL) { launchSingleTop = true }
-                })
-            }
-            items(AppDados.conversas, key = { it.id }) { conversa ->
-                LinhaConversa(
-                    conversa = conversa,
-                    aoClicar = { navController.navigate(Rotas.detalheConversa(conversa.id)) },
-                    aoRemover = { AppDados.removerConversa(conversa) }
-                )
-            }
-            if (AppDados.conversas.isEmpty()) {
+        val estadoLista = rememberLazyListState()
+        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            LazyColumn(
+                state = estadoLista,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = 110.dp)
+            ) {
                 item {
-                    Text(
-                        text = "Nenhuma conversa ainda. Toque no + para começar.",
-                        color = CorFracaChat,
-                        fontSize = 15.sp,
-                        modifier = Modifier.padding(16.dp)
+                    LinhaMensagemDoApp(aoClicar = {
+                        navController.navigate(Rotas.PERFIL) { launchSingleTop = true }
+                    })
+                }
+                items(AppDados.conversas, key = { it.id }) { conversa ->
+                    LinhaConversa(
+                        conversa = conversa,
+                        aoClicar = { navController.navigate(Rotas.detalheConversa(conversa.id)) },
+                        aoRemover = { AppDados.removerConversa(conversa) }
                     )
                 }
+                if (AppDados.conversas.isEmpty()) {
+                    item {
+                        Text(
+                            text = "Nenhuma conversa ainda. Toque no + para começar.",
+                            color = CorFracaChat,
+                            fontSize = 15.sp,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                }
             }
+            BarraRolagem(
+                estado = estadoLista,
+                modifier = Modifier.align(Alignment.CenterEnd).padding(bottom = 100.dp)
+            )
         }
     }
 }

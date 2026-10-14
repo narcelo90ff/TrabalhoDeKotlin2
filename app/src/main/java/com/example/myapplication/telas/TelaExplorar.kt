@@ -36,6 +36,8 @@ import androidx.navigation.NavController
 import com.example.myapplication.dados.AppDados
 import com.example.myapplication.modelo.Perfil
 import com.example.myapplication.navegacao.Rotas
+import com.example.myapplication.componentes.BarraRolagem
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 
 
 private data class CategoriaExplorar(
@@ -59,50 +61,60 @@ fun perfisDaCategoria(nomeCategoria: String): List<Perfil> {
 
 @Composable
 fun TelaExplorar(navController: NavController) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF121212))
-            .statusBarsPadding()
-            .padding(horizontal = 16.dp)
-    ) {
-        Row(
+    val estadoGrade = rememberLazyGridState()
+    Box(modifier = Modifier.fillMaxSize().background(Color(0xFF121212))) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxSize()
+                .statusBarsPadding()
+                .padding(horizontal = 16.dp)
         ) {
-            Text(text = "Explorar", color = Color.White, fontSize = 34.sp, fontWeight = FontWeight.Bold)
-            IconButton(onClick = { navController.navigate(Rotas.DOUBLE_DATE) }) {
-                Icon(Icons.Filled.Style, contentDescription = "Double Date", tint = Color.White)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = "Explorar", color = Color.White, fontSize = 34.sp, fontWeight = FontWeight.Bold)
+                IconButton(onClick = { navController.navigate(Rotas.DOUBLE_DATE) }) {
+                    Icon(Icons.Filled.Style, contentDescription = "Double Date", tint = Color.White)
+                }
             }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Conheça pessoas que têm a mesma intenção que você",
-            color = Color(0xFFB5B5B5),
-            fontSize = 17.sp
-        )
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Conheça pessoas que têm a mesma intenção que você",
+                color = Color(0xFFB5B5B5),
+                fontSize = 17.sp
+            )
+            Spacer(modifier = Modifier.height(16.dp))
 
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(bottom = 110.dp),
-            modifier = Modifier.fillMaxSize()
-        ) {
-            items(categorias) { categoria ->
-                CardCategoria(
-                    categoria = categoria,
-                    quantidade = perfisDaCategoria(categoria.nome).size,
-                    aoClicar = {
-                        navController.navigate(Rotas.explorarDetalhe(Uri.encode(categoria.nome)))
-                    }
-                )
+            LazyVerticalGrid(
+                state = estadoGrade,
+                columns = GridCells.Fixed(2),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(bottom = 110.dp),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                items(categorias) { categoria ->
+                    CardCategoria(
+                        categoria = categoria,
+                        quantidade = perfisDaCategoria(categoria.nome).size,
+                        aoClicar = {
+                            navController.navigate(Rotas.explorarDetalhe(Uri.encode(categoria.nome)))
+                        }
+                    )
+                }
             }
         }
+        BarraRolagem(
+            estado = estadoGrade,
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .statusBarsPadding()
+                .padding(top = 150.dp, bottom = 110.dp)
+        )
     }
 }
 

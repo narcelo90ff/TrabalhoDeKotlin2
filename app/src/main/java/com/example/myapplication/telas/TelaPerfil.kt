@@ -68,6 +68,9 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.myapplication.dados.AppDados
 import com.example.myapplication.navegacao.Rotas
+import com.example.myapplication.componentes.BarraRolagem
+import com.example.myapplication.dados.Carteira
+import com.example.myapplication.dados.Preferencias
 
 private val CorCartaoPerfil = Color(0xFF1E1E1E)
 private val CorTextoFracoPerfil = Color(0xFFB5B5B5)
@@ -77,6 +80,7 @@ private enum class AcaoCartao { EDITAR, ADICIONAR }
 
 @Composable
 fun TelaPerfil(navController: NavController) {
+    val estadoRolagem = rememberScrollState()
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -86,7 +90,7 @@ fun TelaPerfil(navController: NavController) {
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(estadoRolagem)
                 .padding(horizontal = 16.dp)
         ) {
             Row(
@@ -131,7 +135,7 @@ fun TelaPerfil(navController: NavController) {
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                ChipPerfil(Icons.Filled.Home, "São Paulo")
+                ChipPerfil(Icons.Filled.Home, Preferencias.localAtual.substringBefore(","))
                 ChipPerfil(Icons.Filled.Straighten, "1,70 m")
                 ChipPerfil(Icons.Filled.Work, "Estudante")
                 ChipPerfil(Icons.Filled.School, "Faculdade")
@@ -349,6 +353,15 @@ fun TelaPerfil(navController: NavController) {
             Spacer(modifier = Modifier.height(210.dp))
         }
 
+        // barra de rolagem que dá pra segurar e arrastar (acima do banner Gold)
+        BarraRolagem(
+            estado = estadoRolagem,
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .statusBarsPadding()
+                .padding(bottom = 190.dp)
+        )
+
         Row(
             modifier = Modifier
                 .align(Alignment.TopEnd)
@@ -419,9 +432,20 @@ fun TelaPerfil(navController: NavController) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                ItemBeneficio(Icons.Filled.Star, Color(0xFF8FB0F0), "0 Super Like")
-                ItemBeneficio(Icons.Filled.Bolt, Color(0xFFD38CF0), "0 Boost")
-                ItemBeneficio(Icons.Filled.Whatshot, Color(0xFFD32F2F), "Assinaturas")
+                ItemBeneficio(Icons.Filled.Star, Color(0xFF8FB0F0), "${Carteira.superLikes} Super Like") {
+                    navController.navigate(Rotas.compra("SUPERLIKE"))
+                }
+                ItemBeneficio(Icons.Filled.Bolt, Color(0xFFD38CF0), "${Carteira.boosts} Boost") {
+                    navController.navigate(Rotas.compra("BOOST"))
+                }
+                ItemBeneficio(
+                    Icons.Filled.Whatshot,
+                    Color(0xFFD32F2F),
+                    Carteira.plano?.let { "Plano " + it.lowercase().replaceFirstChar { c -> c.uppercase() } }
+                        ?: "Assinaturas"
+                ) {
+                    navController.navigate(Rotas.CONFIGURACOES)
+                }
             }
         }
     }
@@ -562,8 +586,14 @@ private fun CartaoInteresse(
 }
 
 @Composable
-private fun ItemBeneficio(icone: ImageVector, cor: Color, texto: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+private fun ItemBeneficio(icone: ImageVector, cor: Color, texto: String, aoClicar: () -> Unit = { }) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .clickable(onClick = aoClicar)
+            .padding(horizontal = 4.dp, vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         Icon(icone, contentDescription = null, tint = cor, modifier = Modifier.size(24.dp))
         Spacer(modifier = Modifier.width(6.dp))
         Text(texto, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1)

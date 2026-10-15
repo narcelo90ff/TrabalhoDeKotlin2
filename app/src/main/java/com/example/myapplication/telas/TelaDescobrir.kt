@@ -56,9 +56,12 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -79,6 +82,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.myapplication.dados.AppDados
+import com.example.myapplication.dados.banco.SocialRepositorio
+import kotlinx.coroutines.launch
 import com.example.myapplication.dados.AbaDescobrir
 import com.example.myapplication.dados.Astrologia
 import com.example.myapplication.dados.DescobrirEstado
@@ -107,6 +112,10 @@ fun DeslizarPerfis(
     mostrarAbas: Boolean = true,
     mostrarInteresses: Boolean = false
 ) {
+    val contexto = LocalContext.current
+    val repositorio = remember { SocialRepositorio.obter(contexto) }
+    val escopo = rememberCoroutineScope()
+
     var indice by rememberSaveable { mutableIntStateOf(0) }
     var mostrandoDetalhe by rememberSaveable { mutableStateOf(false) }
 
@@ -128,14 +137,19 @@ fun DeslizarPerfis(
     }
 
     val aoPassar: () -> Unit = { proximo() }
+    // curtir grava a Pessoa no banco (Room) em segundo plano e já passa pro próximo perfil
     val aoCurtir: () -> Unit = {
-        AppDados.curtir(perfil)
-        parceiro?.let { AppDados.curtir(it) }
+        escopo.launch {
+            repositorio.curtir(perfil)
+            parceiro?.let { repositorio.curtir(it) }
+        }
         proximo()
     }
     val aoFavoritar: () -> Unit = {
-        AppDados.curtir(perfil, favorito = true)
-        parceiro?.let { AppDados.curtir(it) }
+        escopo.launch {
+            repositorio.curtir(perfil, favorito = true)
+            parceiro?.let { repositorio.curtir(it) }
+        }
         proximo()
     }
     val aoVoltar: () -> Unit = {
@@ -143,9 +157,11 @@ fun DeslizarPerfis(
         indice = (indice.mod(perfis.size) - 1 + perfis.size) % perfis.size
     }
     val aoResponder: () -> Unit = {
-        val pessoa = AppDados.curtir(perfil)
-        val conversa = AppDados.iniciarConversaComPessoa(pessoa)
-        navController.navigate(Rotas.detalheConversa(conversa.id))
+        escopo.launch {
+            repositorio.curtir(perfil)
+                ?.let { pessoa -> repositorio.iniciarConversaComPessoa(pessoa) }
+                ?.let { conversa -> navController.navigate(Rotas.detalheConversa(conversa.id)) }
+        }
     }
     fun mudarAba(nova: AbaDescobrir) {
         mostrandoDetalhe = false

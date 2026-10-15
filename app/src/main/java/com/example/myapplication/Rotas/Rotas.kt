@@ -15,6 +15,7 @@ object Rotas {
     const val LOCALIZACAO = "localizacao"
     const val ASSINATURA = "assinatura/{plano}"
     const val COMPRA = "compra/{tipo}"
+    const val PAGAMENTO = "pagamento/{compraId}"
 
     const val DETALHE_CURTIDA = "detalhe_curtida/{pessoaId}"
     const val DETALHE_CONVERSA = "detalhe_conversa/{conversaId}"
@@ -27,4 +28,6 @@ object Rotas {
     fun assinatura(plano: String) = "assinatura/$plano"
     /** tipo: "BOOST" ou "SUPERLIKE" */
     fun compra(tipo: String) = "compra/$tipo"
+    /** compraId: id da compra pendente salva no banco (Room). */
+    fun pagamento(compraId: Long) = "pagamento/$compraId"
 }

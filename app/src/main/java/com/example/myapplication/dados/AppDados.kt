@@ -1,33 +1,21 @@
 package com.example.myapplication.dados
 
-import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
 import com.example.myapplication.R
-import com.example.myapplication.modelo.Conversa
 import com.example.myapplication.modelo.Perfil
-import com.example.myapplication.modelo.Pessoa
 
 
 object AppDados {
 
-    val curtidas = mutableStateListOf(
-        Pessoa(id = 1, nome = "Beatriz", idade = 24, bio = "Curtiu você de volta!"),
-        Pessoa(id = 2, nome = "Camila", idade = 27, bio = "Match perfeito!")
-    )
-
-    val conversas = mutableStateListOf(
-        Conversa(
-            id = 1,
-            pessoaId = 1,
-            nome = "Beatriz",
-            mensagens = mutableStateListOf("Oii! Tudo bem?")
-        ),
-        Conversa(
-            id = 2,
-            pessoaId = 2,
-            nome = "Camila",
-            mensagens = mutableStateListOf("Combinado então")
-        )
-    )
+    /**
+     * Só os totais ficam em memória (para o badge da barra de baixo e o Perfil).
+     * As listas de Curtidas e Conversas agora vêm do Room; quem atualiza esses totais é o
+     * SocialRepositorio depois de cada operação no banco.
+     */
+    var totalCurtidas by mutableIntStateOf(0)
+    var totalConversas by mutableIntStateOf(0)
 
     val perfis = listOf(
         Perfil(
@@ -91,68 +79,4 @@ object AppDados {
             interesses = listOf("Séries", "Videogame", "Anime", "Programação", "Filmes de terror", "Lanchinhos", "Música")
         )
     )
-
-
-    fun curtir(perfil: Perfil, favorito: Boolean = false): Pessoa {
-        val existente = perfil.pessoaId?.let { buscarPessoa(it) }
-        val pessoa = existente ?: adicionarPessoa(
-            nome = perfil.nome,
-            idade = perfil.idade,
-            bio = "Deu match com você agora!",
-            foto = perfil.foto,
-            // "a 2 km de distância" -> 2
-            distanciaKm = perfil.distancia.filter { it.isDigit() }.toIntOrNull()
-        ).also { perfil.pessoaId = it.id }
-        if (favorito) pessoa.favorito = true
-        return pessoa
-    }
-
-    private var proximoIdPessoa = 3
-    private var proximoIdConversa = 3
-
-    fun adicionarPessoa(
-        nome: String,
-        idade: Int,
-        bio: String,
-        foto: Int? = null,
-        distanciaKm: Int? = null
-    ): Pessoa {
-        val nova = Pessoa(
-            id = proximoIdPessoa, nome = nome, idade = idade, bio = bio,
-            foto = foto, distanciaKm = distanciaKm
-        )
-        proximoIdPessoa++
-        curtidas.add(nova)
-        return nova
-    }
-
-    fun removerPessoa(pessoa: Pessoa) {
-        curtidas.remove(pessoa)
-    }
-
-    fun buscarPessoa(id: Int): Pessoa? = curtidas.find { it.id == id }
-
-    fun adicionarConversa(nome: String, pessoaId: Int? = null): Conversa {
-        val nova = Conversa(
-            id = proximoIdConversa,
-            pessoaId = pessoaId,
-            nome = nome,
-            mensagens = mutableStateListOf()
-        )
-        proximoIdConversa++
-        conversas.add(nova)
-        return nova
-    }
-
-    fun iniciarConversaComPessoa(pessoa: Pessoa): Conversa {
-        val existente = conversas.find { it.pessoaId == pessoa.id }
-        if (existente != null) return existente
-        return adicionarConversa(nome = pessoa.nome, pessoaId = pessoa.id)
-    }
-
-    fun removerConversa(conversa: Conversa) {
-        conversas.remove(conversa)
-    }
-
-    fun buscarConversa(id: Int): Conversa? = conversas.find { it.id == id }
 }

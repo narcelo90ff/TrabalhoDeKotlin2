@@ -59,7 +59,8 @@ dependencies {
 
     implementation("androidx.room3:room3-runtime:$room_version")
     ksp("androidx.room3:room3-compiler:$room_version")
-
+    implementation("androidx.sqlite:sqlite-bundled:2.7.1")
+    implementation("com.google.zxing:core:3.5.3")
 
     val nav_version = "2.10.2"
 

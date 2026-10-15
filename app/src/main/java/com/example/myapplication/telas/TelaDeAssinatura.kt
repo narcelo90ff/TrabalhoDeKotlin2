@@ -26,22 +26,22 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -51,9 +51,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.myapplication.componentes.BarraRolagem
-import com.example.myapplication.dados.Carteira
+import com.example.myapplication.dados.banco.LojaRepositorio
+import com.example.myapplication.dados.banco.TipoCompra
+import com.example.myapplication.navegacao.Rotas
 import java.util.Locale
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 private const val NOME_APP = "TINDER"
 private val FundoAssinatura = Color(0xFF111111)
@@ -75,7 +79,6 @@ private data class DadosPlano(
     val beneficios: List<String>
 )
 
-/** "ANONIMO" é o Plus, só que com o título do modo anônimo (como no vídeo). */
 private fun dadosDoPlano(chave: String): DadosPlano {
     val plus = DadosPlano(
         planoSalvo = "PLUS", nomeSelo = "PLUS",
@@ -134,13 +137,16 @@ private fun dadosDoPlano(chave: String): DadosPlano {
 
 /**
  * Tela de assinatura (Platinum, Gold, Plus ou Modo anônimo): escolhe o plano,
- * vê o que está incluído e "continua" — a compra é simulada, só em memória.
+ * vê o que está incluído e "continua": a assinatura é gravada no banco (Room)
+ * como pendente e o usuário vai para a tela de pagamento com QR Code Pix.
  */
 @Composable
 fun TelaAssinatura(navController: NavController, plano: String) {
     val dados = remember(plano) { dadosDoPlano(plano) }
     var escolhida by remember { mutableIntStateOf(0) }
-    var mostrarConfirmacao by remember { mutableStateOf(false) }
+    var criandoCompra by remember { mutableStateOf(false) }
+    val contexto = LocalContext.current
+    val escopo = rememberCoroutineScope()
     val estadoRolagem = rememberScrollState()
 
     val opcao = dados.opcoes[escolhida]
@@ -293,7 +299,23 @@ fun TelaAssinatura(navController: NavController, plano: String) {
             )
             Spacer(modifier = Modifier.height(12.dp))
             Button(
-                onClick = { mostrarConfirmacao = true },
+                onClick = {
+                    if (!criandoCompra) {
+                        criandoCompra = true
+                        escopo.launch {
+                            val nomePlano = dados.nomeSelo.lowercase().replaceFirstChar { it.uppercase() }
+                            val compraId = LojaRepositorio.obter(contexto).criarCompra(
+                                tipo = TipoCompra.PLANO,
+                                item = "Plano $nomePlano (${opcao.nome})",
+                                quantidade = 0,
+                                plano = dados.planoSalvo,
+                                valorCentavos = (total * 100).roundToLong()
+                            )
+                            criandoCompra = false
+                            navController.navigate(Rotas.pagamento(compraId))
+                        }
+                    }
+                },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEDEDED), contentColor = Color.Black),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -302,29 +324,6 @@ fun TelaAssinatura(navController: NavController, plano: String) {
                 Text("Continuar - ${formatarReais(total)} total", fontSize = 17.sp, fontWeight = FontWeight.Bold)
             }
         }
-    }
-
-    if (mostrarConfirmacao) {
-        AlertDialog(
-            onDismissRequest = { mostrarConfirmacao = false },
-            title = { Text("Assinatura simulada") },
-            text = {
-                Text(
-                    "Você assinou o plano ${dados.nomeSelo} (${opcao.nome}) por ${formatarReais(total)}. " +
-                            "É só um exemplo: nenhum pagamento de verdade foi feito."
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    Carteira.plano = dados.planoSalvo
-                    mostrarConfirmacao = false
-                    navController.popBackStack()
-                }) { Text("OK") }
-            },
-            dismissButton = {
-                TextButton(onClick = { mostrarConfirmacao = false }) { Text("Cancelar") }
-            }
-        )
     }
 }
 

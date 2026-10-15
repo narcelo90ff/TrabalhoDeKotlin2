@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -36,25 +38,32 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.myapplication.componentes.BarraRolagem
 import com.example.myapplication.dados.Preferencias
+import com.example.myapplication.dados.banco.LocalEntity
+import com.example.myapplication.dados.banco.LocalRepositorio
+import kotlinx.coroutines.launch
 
-/**
- * Localização (Modo Passaporte): escolhe de qual cidade você quer dar matches
- * ou adiciona um local novo. A escolha aparece nas Configurações e no Perfil.
- */
 @Composable
 fun TelaLocalizacao(navController: NavController) {
-    var mostrarDialogo by remember { mutableStateOf(false) }
+    val contexto = LocalContext.current
+    val repositorio = remember { LocalRepositorio.obter(contexto) }
+    val escopo = rememberCoroutineScope()
+
+    var mostrarNovo by remember { mutableStateOf(false) }
+    var editando by remember { mutableStateOf<LocalEntity?>(null) }
+    var erroEdicao by remember { mutableStateOf<String?>(null) }
     val estadoLista = rememberLazyListState()
 
     Column(
@@ -63,7 +72,6 @@ fun TelaLocalizacao(navController: NavController) {
             .background(Color(0xFF0E0E0E))
             .statusBarsPadding()
     ) {
-        // ---- topo: voltar + título ----
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -97,37 +105,47 @@ fun TelaLocalizacao(navController: NavController) {
             modifier = Modifier.padding(start = 20.dp, top = 12.dp, bottom = 8.dp)
         )
 
-        // ---- lista de locais (toque escolhe; o X remove) ----
         Box(modifier = Modifier.weight(1f)) {
             LazyColumn(
                 state = estadoLista,
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 16.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(Preferencias.locais, key = { it }) { local ->
-                    val atual = local == Preferencias.localAtual
+                items(Preferencias.locaisSalvos, key = { it.id }) { local ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(16.dp))
                             .background(Color(0xFF1A1A1A))
-                            .clickable { Preferencias.localAtual = local }
+                            .clickable { escopo.launch { repositorio.escolher(local.id) } }
                             .padding(horizontal = 16.dp, vertical = 16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(Icons.Filled.LocationOn, contentDescription = null, tint = CfgVermelho, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(14.dp))
-                        Text(local, color = Color.White, fontSize = 16.sp, modifier = Modifier.weight(1f))
-                        if (atual) {
+                        Text(local.nome, color = Color.White, fontSize = 16.sp, modifier = Modifier.weight(1f))
+
+                        Icon(
+                            Icons.Filled.Edit,
+                            contentDescription = "Editar local",
+                            tint = CfgTextoFraco,
+                            modifier = Modifier
+                                .size(22.dp)
+                                .clickable {
+                                    erroEdicao = null
+                                    editando = local
+                                }
+                        )
+                        Spacer(modifier = Modifier.width(14.dp))
+                        if (local.atual) {
                             Icon(Icons.Filled.Check, contentDescription = "Local atual", tint = CfgVermelho)
                         } else {
-                            // só dá pra remover quem não é o local atual
                             Icon(
                                 Icons.Filled.Close,
                                 contentDescription = "Remover local",
                                 tint = CfgTextoFraco,
-                                modifier = Modifier.clickable { Preferencias.locais.remove(local) }
+                                modifier = Modifier.clickable { escopo.launch { repositorio.remover(local.id) } }
                             )
                         }
                     }
@@ -136,7 +154,6 @@ fun TelaLocalizacao(navController: NavController) {
             BarraRolagem(estado = estadoLista, modifier = Modifier.align(Alignment.CenterEnd))
         }
 
-        // ---- botão fixo embaixo ----
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -144,7 +161,7 @@ fun TelaLocalizacao(navController: NavController) {
                 .padding(16.dp)
         ) {
             Button(
-                onClick = { mostrarDialogo = true },
+                onClick = { mostrarNovo = true },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF1F1F1), contentColor = Color.Black),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -155,36 +172,68 @@ fun TelaLocalizacao(navController: NavController) {
         }
     }
 
-    if (mostrarDialogo) {
-        DialogNovoLocal(
-            aoFechar = { mostrarDialogo = false },
-            aoAdicionar = { nome ->
-                val limpo = nome.trim()
-                if (limpo !in Preferencias.locais) Preferencias.locais.add(limpo)
-                Preferencias.localAtual = limpo
-                mostrarDialogo = false
+    if (mostrarNovo) {
+        DialogLocal(
+            titulo = "Adicionar local novo",
+            textoInicial = "",
+            botao = "Adicionar",
+            erro = null,
+            aoFechar = { mostrarNovo = false },
+            aoConfirmar = { nome ->
+                escopo.launch {
+                    repositorio.adicionar(nome)
+                    mostrarNovo = false
+                }
+            }
+        )
+    }
+
+    editando?.let { local ->
+        DialogLocal(
+            titulo = "Editar local",
+            textoInicial = local.nome,
+            botao = "Salvar",
+            erro = erroEdicao,
+            aoFechar = { editando = null },
+            aoConfirmar = { nome ->
+                escopo.launch {
+                    if (repositorio.renomear(local.id, nome)) {
+                        editando = null
+                    } else {
+                        erroEdicao = "Já existe um local com esse nome."
+                    }
+                }
             }
         )
     }
 }
 
 @Composable
-private fun DialogNovoLocal(aoFechar: () -> Unit, aoAdicionar: (String) -> Unit) {
-    var nome by remember { mutableStateOf("") }
+private fun DialogLocal(
+    titulo: String,
+    textoInicial: String,
+    botao: String,
+    erro: String?,
+    aoFechar: () -> Unit,
+    aoConfirmar: (String) -> Unit
+) {
+    var nome by remember { mutableStateOf(textoInicial) }
 
     AlertDialog(
         onDismissRequest = aoFechar,
-        title = { Text("Adicionar local novo") },
+        title = { Text(titulo) },
         text = {
             OutlinedTextField(
                 value = nome,
                 onValueChange = { nome = it },
                 label = { Text("Cidade, UF") },
-                singleLine = true
+                singleLine = true,
+                isError = erro != null,
+                supportingText = { if (erro != null) Text(erro) }
             )
         },
         confirmButton = {
-            TextButton(onClick = { if (nome.isNotBlank()) aoAdicionar(nome) }) { Text("Adicionar") }
+            TextButton(onClick = { if (nome.isNotBlank()) aoConfirmar(nome) }) { Text(botao) }
         },
         dismissButton = {
             TextButton(onClick = aoFechar) { Text("Cancelar") }

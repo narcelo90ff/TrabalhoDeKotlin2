@@ -18,7 +18,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -36,6 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -43,6 +44,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -51,7 +53,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.myapplication.componentes.FotoOuInicial
-import com.example.myapplication.dados.AppDados
+import com.example.myapplication.dados.banco.SocialRepositorio
+import com.example.myapplication.modelo.Conversa
+import com.example.myapplication.modelo.Mensagem
+import com.example.myapplication.modelo.Pessoa
+import com.example.myapplication.modelo.foto
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -65,23 +72,23 @@ private val CorTextoFracoChat = Color(0xFF9A9A9A)
 
 @Composable
 fun TelaDetalheConversa(navController: NavController, conversaId: Int) {
-    val conversa = AppDados.buscarConversa(conversaId)
+    val contexto = LocalContext.current
+    val repositorio = remember { SocialRepositorio.obter(contexto) }
+    val escopo = rememberCoroutineScope()
 
-    if (conversa == null) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(CorFundoChat)
-                .statusBarsPadding(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("Essa conversa não existe mais.", color = Color.White)
-        }
-        return
+    // Detalhes: busca a conversa, a pessoa e as mensagens direto no banco pelo id da navegação.
+    var conversaCarregada by remember { mutableStateOf<Conversa?>(null) }
+    var pessoaCarregada by remember { mutableStateOf<Pessoa?>(null) }
+    var mensagens by remember { mutableStateOf<List<Mensagem>>(emptyList()) }
+    var carregando by remember { mutableStateOf(true) }
+
+    LaunchedEffect(conversaId) {
+        val encontrada = repositorio.buscarConversa(conversaId)
+        conversaCarregada = encontrada
+        pessoaCarregada = encontrada?.pessoaId?.let { repositorio.buscarPessoa(it) }
+        mensagens = repositorio.listarMensagens(conversaId)
+        carregando = false
     }
-
-    val pessoa = conversa.pessoaId?.let { AppDados.buscarPessoa(it) }
-    val temFotoNaIntro = pessoa?.foto != null
 
     var texto by remember { mutableStateOf("") }
     val estadoLista = rememberLazyListState()
@@ -91,18 +98,38 @@ fun TelaDetalheConversa(navController: NavController, conversaId: Int) {
     val dataMatch = remember { SimpleDateFormat("dd/MM/yy", ptBR).format(agora) }
     val dataHora = remember { SimpleDateFormat("d 'de' MMM., HH:mm", ptBR).format(agora) }
 
+    val conversa = conversaCarregada
+    val pessoa = pessoaCarregada
+    val temFotoNaIntro = pessoa?.foto != null
     val itensFixos = if (temFotoNaIntro) 3 else 2
-    val totalItens = itensFixos + conversa.mensagens.size
+    val totalItens = itensFixos + mensagens.size
 
     LaunchedEffect(totalItens) {
-        estadoLista.animateScrollToItem(totalItens - 1)
+        if (conversa != null) estadoLista.animateScrollToItem(totalItens - 1)
+    }
+
+    if (conversa == null) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(CorFundoChat)
+                .statusBarsPadding(),
+            contentAlignment = Alignment.Center
+        ) {
+            // enquanto a consulta não termina, não mostra "não existe mais"
+            if (!carregando) Text("Essa conversa não existe mais.", color = Color.White)
+        }
+        return
     }
 
     fun enviar() {
-        if (texto.isNotBlank()) {
-            conversa.mensagens.add(texto.trim())
-            conversa.minhasMensagens.add(conversa.mensagens.size - 1)
+        val conteudo = texto.trim()
+        if (conteudo.isNotEmpty()) {
             texto = ""
+            escopo.launch {
+                repositorio.enviarMensagem(conversa.id, conteudo)
+                mensagens = repositorio.listarMensagens(conversa.id)
+            }
         }
     }
 
@@ -196,14 +223,14 @@ fun TelaDetalheConversa(navController: NavController, conversaId: Int) {
                         }
                     }
                 }
-                itemsIndexed(conversa.mensagens) { indice, mensagem ->
-                    val minha = indice in conversa.minhasMensagens
+                items(mensagens, key = { it.id }) { mensagem ->
+                    val minha = mensagem.minha
                     Column(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalAlignment = if (minha) Alignment.End else Alignment.Start
                     ) {
-                        BalaoChat(mensagem, minha = minha)
-                        if (minha && indice == conversa.minhasMensagens.lastOrNull()) {
+                        BalaoChat(mensagem.texto, minha = minha)
+                        if (minha && mensagem.id == mensagens.lastOrNull { it.minha }?.id) {
                             Text("Enviado", color = CorTextoFracoChat, fontSize = 11.sp)
                         }
                     }

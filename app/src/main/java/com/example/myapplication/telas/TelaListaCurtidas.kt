@@ -30,6 +30,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -43,6 +44,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
@@ -53,13 +55,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.myapplication.componentes.FotoOuInicial
-import com.example.myapplication.dados.AppDados
+import com.example.myapplication.dados.banco.SocialRepositorio
+import com.example.myapplication.modelo.foto
 import com.example.myapplication.modelo.Pessoa
 import com.example.myapplication.navegacao.Rotas
 import kotlinx.coroutines.launch
@@ -68,11 +72,27 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 
 @Composable
 fun TelaListaCurtidas(navController: NavController) {
+    val contexto = LocalContext.current
+    val repositorio = remember { SocialRepositorio.obter(contexto) }
+    val escopo = rememberCoroutineScope()
+
     var mostrarDialogo by remember { mutableStateOf(false) }
+    var pessoaEditando by remember { mutableStateOf<Pessoa?>(null) }
     var ordem by remember { mutableStateOf("Recomendado") }
     var mostrarOrdenacao by remember { mutableStateOf(false) }
 
-    val lista = ordenarCurtidas(AppDados.curtidas, ordem)
+    // A lista vem do banco (Room): é lida ao abrir a tela e relida depois de cada alteração.
+    var curtidas by remember { mutableStateOf<List<Pessoa>>(emptyList()) }
+    LaunchedEffect(Unit) { curtidas = repositorio.listarPessoas() }
+
+    fun alterar(operacao: suspend () -> Unit) {
+        escopo.launch {
+            operacao()
+            curtidas = repositorio.listarPessoas()
+        }
+    }
+
+    val lista = ordenarCurtidas(curtidas, ordem)
     val estadoGrade = rememberLazyGridState()
 
     Box(
@@ -99,7 +119,7 @@ fun TelaListaCurtidas(navController: NavController) {
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Text(
-                        text = AppDados.curtidas.size.toString(),
+                        text = curtidas.size.toString(),
                         color = Color.White,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
@@ -142,11 +162,15 @@ fun TelaListaCurtidas(navController: NavController) {
                     CartaoCurtida(
                         pessoa = pessoa,
                         aoClicar = {
-                            val conversa = AppDados.iniciarConversaComPessoa(pessoa)
-                            navController.navigate(Rotas.detalheConversa(conversa.id))
+                            escopo.launch {
+                                repositorio.iniciarConversaComPessoa(pessoa)?.let { conversa ->
+                                    navController.navigate(Rotas.detalheConversa(conversa.id))
+                                }
+                            }
                         },
-                        aoFavoritar = { pessoa.favorito = !pessoa.favorito },
-                        aoRemover = { AppDados.removerPessoa(pessoa) }
+                        aoFavoritar = { alterar { repositorio.alternarFavorito(pessoa) } },
+                        aoEditar = { pessoaEditando = pessoa },
+                        aoRemover = { alterar { repositorio.removerPessoa(pessoa) } }
                     )
                 }
             }
@@ -188,9 +212,22 @@ fun TelaListaCurtidas(navController: NavController) {
     if (mostrarDialogo) {
         DialogNovaCurtida(
             aoFechar = { mostrarDialogo = false },
-            aoAdicionar = { nome, idade, mensagem ->
-                AppDados.adicionarPessoa(nome = nome, idade = idade, bio = mensagem)
+            aoConfirmar = { nome, idade, mensagem ->
+                alterar { repositorio.adicionarPessoa(nome = nome, idade = idade, bio = mensagem) }
                 mostrarDialogo = false
+            }
+        )
+    }
+
+    pessoaEditando?.let { alvo ->
+        DialogNovaCurtida(
+            inicial = alvo,
+            aoFechar = { pessoaEditando = null },
+            aoConfirmar = { nome, idade, mensagem ->
+                alterar {
+                    repositorio.atualizarPessoa(alvo.copy(nome = nome.trim(), idade = idade, bio = mensagem))
+                }
+                pessoaEditando = null
             }
         )
     }
@@ -201,6 +238,7 @@ private fun CartaoCurtida(
     pessoa: Pessoa,
     aoClicar: () -> Unit,
     aoFavoritar: () -> Unit,
+    aoEditar: () -> Unit,
     aoRemover: () -> Unit
 ) {
     Box(
@@ -236,6 +274,12 @@ private fun CartaoCurtida(
                 cor = Color(0xFFFE3C72),
                 descricao = "Favoritar",
                 aoClicar = aoFavoritar
+            )
+            BotaoMini(
+                icone = Icons.Filled.Edit,
+                cor = Color.White,
+                descricao = "Editar",
+                aoClicar = aoEditar
             )
             BotaoMini(
                 icone = Icons.Filled.Delete,
@@ -306,15 +350,16 @@ private fun BotaoMini(
 @Composable
 private fun DialogNovaCurtida(
     aoFechar: () -> Unit,
-    aoAdicionar: (String, Int, String) -> Unit
+    aoConfirmar: (String, Int, String) -> Unit,
+    inicial: Pessoa? = null // null = adicionar; preenchido = editar
 ) {
-    var nomeNovo by remember { mutableStateOf("") }
-    var idadeNova by remember { mutableStateOf("") }
-    var bioNova by remember { mutableStateOf("") }
+    var nomeNovo by remember { mutableStateOf(inicial?.nome ?: "") }
+    var idadeNova by remember { mutableStateOf(inicial?.idade?.toString() ?: "") }
+    var bioNova by remember { mutableStateOf(inicial?.bio ?: "") }
 
     AlertDialog(
         onDismissRequest = aoFechar,
-        title = { Text("Adicionar curtida") },
+        title = { Text(if (inicial == null) "Adicionar curtida" else "Editar curtida") },
         text = {
             Column {
                 OutlinedTextField(
@@ -341,14 +386,14 @@ private fun DialogNovaCurtida(
         confirmButton = {
             TextButton(onClick = {
                 if (nomeNovo.isNotBlank()) {
-                    aoAdicionar(
+                    aoConfirmar(
                         nomeNovo,
                         idadeNova.toIntOrNull() ?: 18,
                         bioNova.ifBlank { "Nova curtida!" }
                     )
                 }
             }) {
-                Text("Adicionar")
+                Text(if (inicial == null) "Adicionar" else "Salvar")
             }
         },
         dismissButton = {

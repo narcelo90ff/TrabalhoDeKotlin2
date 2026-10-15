@@ -88,7 +88,7 @@ fun BottomNavBar(navController: NavController) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // bolinha vermelha com a quantidade de curtidas, como no print
-                val qtdCurtidas = AppDados.curtidas.size
+                val qtdCurtidas = AppDados.totalCurtidas
                 BadgedBox(
                     badge = {
                         if (item.rota == Rotas.CURTIDAS && qtdCurtidas > 0) {

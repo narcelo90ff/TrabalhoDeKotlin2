@@ -343,8 +343,8 @@ fun TelaPerfil(navController: NavController) {
             }
 
             Text(
-                text = "Você tem ${AppDados.curtidas.size} curtidas e " +
-                        "${AppDados.conversas.size} conversas.",
+                text = "Você tem ${AppDados.totalCurtidas} curtidas e " +
+                        "${AppDados.totalConversas} conversas.",
                 color = CorTextoFracoPerfil,
                 fontSize = 14.sp,
                 modifier = Modifier.padding(start = 8.dp, top = 16.dp)

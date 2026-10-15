@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Verified
@@ -35,22 +36,28 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.myapplication.componentes.FotoOuInicial
-import com.example.myapplication.dados.AppDados
+import com.example.myapplication.dados.banco.ResumoConversa
+import com.example.myapplication.dados.banco.SocialRepositorio
+import com.example.myapplication.modelo.foto
+import kotlinx.coroutines.launch
 import com.example.myapplication.modelo.Conversa
 import com.example.myapplication.modelo.Pessoa
 import com.example.myapplication.navegacao.Rotas
@@ -66,7 +73,29 @@ private val CorPilulaChat = Color(0xFF1A1A1A)
 
 @Composable
 fun TelaListaConversas(navController: NavController) {
+    val contexto = LocalContext.current
+    val repositorio = remember { SocialRepositorio.obter(contexto) }
+    val escopo = rememberCoroutineScope()
+
     var mostrarDialogo by remember { mutableStateOf(false) }
+    var conversaEditando by remember { mutableStateOf<Conversa?>(null) }
+
+    // As listas vêm do banco (Room): lidas ao abrir a tela e relidas depois de cada alteração.
+    var curtidas by remember { mutableStateOf<List<Pessoa>>(emptyList()) }
+    var resumos by remember { mutableStateOf<List<ResumoConversa>>(emptyList()) }
+
+    suspend fun recarregar() {
+        curtidas = repositorio.listarPessoas()
+        resumos = repositorio.listarResumos()
+    }
+    LaunchedEffect(Unit) { recarregar() }
+
+    fun alterar(operacao: suspend () -> Unit) {
+        escopo.launch {
+            operacao()
+            recarregar()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -85,12 +114,16 @@ fun TelaListaConversas(navController: NavController) {
         )
 
         LinhaNovosMatches(
+            curtidas = curtidas,
             aoClicarCurtidas = {
                 navController.navigate(Rotas.CURTIDAS) { launchSingleTop = true }
             },
             aoClicarPessoa = { pessoa ->
-                val conversa = AppDados.iniciarConversaComPessoa(pessoa)
-                navController.navigate(Rotas.detalheConversa(conversa.id))
+                escopo.launch {
+                    repositorio.iniciarConversaComPessoa(pessoa)?.let { conversa ->
+                        navController.navigate(Rotas.detalheConversa(conversa.id))
+                    }
+                }
             }
         )
 
@@ -98,6 +131,9 @@ fun TelaListaConversas(navController: NavController) {
 
         PainelMensagens(
             navController = navController,
+            resumos = resumos,
+            aoEditar = { conversaEditando = it },
+            aoRemover = { alterar { repositorio.removerConversa(it) } },
             modifier = Modifier.weight(1f)
         )
     }
@@ -105,9 +141,23 @@ fun TelaListaConversas(navController: NavController) {
     if (mostrarDialogo) {
         DialogNovaConversa(
             aoFechar = { mostrarDialogo = false },
-            aoIniciar = { nome ->
-                AppDados.adicionarConversa(nome = nome)
+            aoConfirmar = { nome ->
+                alterar { repositorio.criarConversa(nome) }
                 mostrarDialogo = false
+            }
+        )
+    }
+
+    conversaEditando?.let { alvo ->
+        DialogNovaConversa(
+            titulo = "Renomear conversa",
+            rotulo = "Nome da conversa",
+            botao = "Salvar",
+            valorInicial = alvo.nome,
+            aoFechar = { conversaEditando = null },
+            aoConfirmar = { nome ->
+                alterar { repositorio.renomearConversa(alvo, nome) }
+                conversaEditando = null
             }
         )
     }
@@ -148,6 +198,7 @@ private fun CabecalhoChat(aoNovaConversa: () -> Unit) {
 
 @Composable
 private fun LinhaNovosMatches(
+    curtidas: List<Pessoa>,
     aoClicarCurtidas: () -> Unit,
     aoClicarPessoa: (Pessoa) -> Unit
 ) {
@@ -155,15 +206,15 @@ private fun LinhaNovosMatches(
         contentPadding = PaddingValues(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item { CartaoResumoCurtidas(aoClicar = aoClicarCurtidas) }
-        items(AppDados.curtidas, key = { it.id }) { pessoa ->
+        item { CartaoResumoCurtidas(total = curtidas.size, aoClicar = aoClicarCurtidas) }
+        items(curtidas, key = { it.id }) { pessoa ->
             CartaoMatch(pessoa = pessoa, aoClicar = { aoClicarPessoa(pessoa) })
         }
     }
 }
 
 @Composable
-private fun CartaoResumoCurtidas(aoClicar: () -> Unit) {
+private fun CartaoResumoCurtidas(total: Int, aoClicar: () -> Unit) {
     Column(
         modifier = Modifier
             .width(82.dp)
@@ -186,7 +237,7 @@ private fun CartaoResumoCurtidas(aoClicar: () -> Unit) {
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = AppDados.curtidas.size.toString(),
+                    text = total.toString(),
                     color = Color.Black,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
@@ -234,7 +285,13 @@ private fun CartaoMatch(pessoa: Pessoa, aoClicar: () -> Unit) {
 
 
 @Composable
-private fun PainelMensagens(navController: NavController, modifier: Modifier = Modifier) {
+private fun PainelMensagens(
+    navController: NavController,
+    resumos: List<ResumoConversa>,
+    aoEditar: (Conversa) -> Unit,
+    aoRemover: (Conversa) -> Unit,
+    modifier: Modifier = Modifier
+) {
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -261,14 +318,15 @@ private fun PainelMensagens(navController: NavController, modifier: Modifier = M
                         navController.navigate(Rotas.PERFIL) { launchSingleTop = true }
                     })
                 }
-                items(AppDados.conversas, key = { it.id }) { conversa ->
+                items(resumos, key = { it.conversa.id }) { resumo ->
                     LinhaConversa(
-                        conversa = conversa,
-                        aoClicar = { navController.navigate(Rotas.detalheConversa(conversa.id)) },
-                        aoRemover = { AppDados.removerConversa(conversa) }
+                        resumo = resumo,
+                        aoClicar = { navController.navigate(Rotas.detalheConversa(resumo.conversa.id)) },
+                        aoEditar = { aoEditar(resumo.conversa) },
+                        aoRemover = { aoRemover(resumo.conversa) }
                     )
                 }
-                if (AppDados.conversas.isEmpty()) {
+                if (resumos.isEmpty()) {
                     item {
                         Text(
                             text = "Nenhuma conversa ainda. Toque no + para começar.",
@@ -338,11 +396,13 @@ private fun LinhaMensagemDoApp(aoClicar: () -> Unit) {
 
 @Composable
 private fun LinhaConversa(
-    conversa: Conversa,
+    resumo: ResumoConversa,
     aoClicar: () -> Unit,
+    aoEditar: () -> Unit,
     aoRemover: () -> Unit
 ) {
-    val pessoa = conversa.pessoaId?.let { AppDados.buscarPessoa(it) }
+    val conversa = resumo.conversa
+    val pessoa = resumo.pessoa
 
     Column {
         Row(
@@ -369,11 +429,18 @@ private fun LinhaConversa(
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = conversa.mensagens.lastOrNull() ?: "Nenhuma mensagem ainda",
+                    text = resumo.ultimaMensagem ?: "Nenhuma mensagem ainda",
                     color = CorFracaChat,
                     fontSize = 14.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
+                )
+            }
+            IconButton(onClick = aoEditar) {
+                Icon(
+                    Icons.Filled.Edit,
+                    contentDescription = "Renomear conversa",
+                    tint = Color(0xFF8A8A8A)
                 )
             }
             IconButton(onClick = aoRemover) {
@@ -402,23 +469,30 @@ private fun DivisorLinha() {
 
 
 @Composable
-private fun DialogNovaConversa(aoFechar: () -> Unit, aoIniciar: (String) -> Unit) {
-    var nome by remember { mutableStateOf("") }
+private fun DialogNovaConversa(
+    aoFechar: () -> Unit,
+    aoConfirmar: (String) -> Unit,
+    titulo: String = "Nova conversa",
+    rotulo: String = "Nova conversa com...",
+    botao: String = "Iniciar",
+    valorInicial: String = ""
+) {
+    var nome by remember { mutableStateOf(valorInicial) }
 
     AlertDialog(
         onDismissRequest = aoFechar,
-        title = { Text("Nova conversa") },
+        title = { Text(titulo) },
         text = {
             OutlinedTextField(
                 value = nome,
                 onValueChange = { nome = it },
-                label = { Text("Nova conversa com...") },
+                label = { Text(rotulo) },
                 singleLine = true
             )
         },
         confirmButton = {
-            TextButton(onClick = { if (nome.isNotBlank()) aoIniciar(nome) }) {
-                Text("Iniciar")
+            TextButton(onClick = { if (nome.isNotBlank()) aoConfirmar(nome) }) {
+                Text(botao)
             }
         },
         dismissButton = {

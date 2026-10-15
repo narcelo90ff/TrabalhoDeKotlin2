@@ -30,6 +30,7 @@ import com.example.myapplication.telas.TelaPerfil
 import com.example.myapplication.telas.TelaAssinatura
 import com.example.myapplication.telas.TelaCompra
 import com.example.myapplication.telas.TelaLocalizacao
+import com.example.myapplication.telas.TelaPagamento
 
 @Composable
 fun AppNavigation() {
@@ -117,6 +118,13 @@ fun AppNavigation() {
             ) { entrada ->
                 val tipo = entrada.arguments?.getString("tipo") ?: "BOOST"
                 TelaCompra(navController = navController, tipo = tipo)
+            }
+            composable(
+                route = Rotas.PAGAMENTO,
+                arguments = listOf(navArgument("compraId") { type = NavType.LongType })
+            ) { entrada ->
+                val compraId = entrada.arguments?.getLong("compraId") ?: -1L
+                TelaPagamento(navController = navController, compraId = compraId)
             }
         }
     }

@@ -24,16 +24,15 @@ import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -41,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
@@ -52,9 +52,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.myapplication.componentes.BarraRolagem
-import com.example.myapplication.dados.Carteira
+import com.example.myapplication.dados.banco.LojaRepositorio
+import com.example.myapplication.dados.banco.TipoCompra
 import com.example.myapplication.navegacao.Rotas
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 /** Uma linha de preço: "5 Boosts - R$ 21,98/cada". */
 private class OpcaoCompra(
@@ -103,8 +106,8 @@ private val subtituloAba = listOf(
 
 /**
  * Tela de compra de Boosts ou Super Likes (tipo = "BOOST" ou "SUPERLIKE").
- * Escolhe a quantidade, vê o total e "continua": a compra é simulada e
- * soma na Carteira, que aparece no Perfil.
+ * Escolhe a quantidade, vê o total e "continua": a compra é gravada no banco (Room)
+ * como pendente e o usuário vai para a tela de pagamento com QR Code Pix.
  */
 @Composable
 fun TelaCompra(navController: NavController, tipo: String) {
@@ -114,7 +117,9 @@ fun TelaCompra(navController: NavController, tipo: String) {
 
     var abaSelecionada by remember { mutableIntStateOf(0) }
     var escolhida by remember { mutableIntStateOf(0) }
-    var mostrarConfirmacao by remember { mutableStateOf(false) }
+    var criandoCompra by remember { mutableStateOf(false) }
+    val contexto = LocalContext.current
+    val escopo = rememberCoroutineScope()
     val estadoRolagem = rememberScrollState()
 
     // no Boost, cada aba (Boost / Primetime / Super Boost) muda o preço
@@ -304,7 +309,23 @@ fun TelaCompra(navController: NavController, tipo: String) {
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
             Button(
-                onClick = { mostrarConfirmacao = true },
+                onClick = {
+                    if (!criandoCompra) {
+                        criandoCompra = true
+                        escopo.launch {
+                            val nomeOpcao = if (ehBoost) abasBoost[abaSelecionada] else nomeItem
+                            val compraId = LojaRepositorio.obter(contexto).criarCompra(
+                                tipo = if (ehBoost) TipoCompra.BOOST else TipoCompra.SUPERLIKE,
+                                item = "${opcao.quantidade} $nomeOpcao" + if (opcao.quantidade > 1) "s" else "",
+                                quantidade = opcao.quantidade,
+                                plano = null,
+                                valorCentavos = (total * 100).roundToLong()
+                            )
+                            criandoCompra = false
+                            navController.navigate(Rotas.pagamento(compraId))
+                        }
+                    }
+                },
                 colors = ButtonDefaults.buttonColors(containerColor = tema.botao, contentColor = Color.Black),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -313,30 +334,6 @@ fun TelaCompra(navController: NavController, tipo: String) {
                 Text("Continuar - ${formatarReais(total)} total", fontSize = 17.sp, fontWeight = FontWeight.Bold)
             }
         }
-    }
-
-    if (mostrarConfirmacao) {
-        AlertDialog(
-            onDismissRequest = { mostrarConfirmacao = false },
-            title = { Text("Compra simulada") },
-            text = {
-                Text(
-                    "Você comprou ${opcao.quantidade} ${if (ehBoost) "Boost(s)" else "Super Like(s)"} " +
-                            "por ${formatarReais(total)}. É só um exemplo: nenhum pagamento de verdade foi feito."
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    if (ehBoost) Carteira.boosts += opcao.quantidade
-                    else Carteira.superLikes += opcao.quantidade
-                    mostrarConfirmacao = false
-                    navController.popBackStack()
-                }) { Text("OK") }
-            },
-            dismissButton = {
-                TextButton(onClick = { mostrarConfirmacao = false }) { Text("Cancelar") }
-            }
-        )
     }
 }
 

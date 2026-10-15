@@ -17,18 +17,38 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.myapplication.dados.AppDados
+import com.example.myapplication.dados.banco.SocialRepositorio
+import com.example.myapplication.modelo.Pessoa
 import com.example.myapplication.navegacao.Rotas
+import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 @Composable
 fun TelaDetalheCurtida(navController: NavController, pessoaId: Int) {
-    val pessoa = AppDados.buscarPessoa(pessoaId)
+    val contexto = LocalContext.current
+    val repositorio = remember { SocialRepositorio.obter(contexto) }
+    val escopo = rememberCoroutineScope()
+
+    // Detalhes: busca a pessoa direto no banco pelo id recebido na navegação.
+    var pessoaCarregada by remember { mutableStateOf<Pessoa?>(null) }
+    var carregando by remember { mutableStateOf(true) }
+    LaunchedEffect(pessoaId) {
+        pessoaCarregada = repositorio.buscarPessoa(pessoaId)
+        carregando = false
+    }
+    val pessoa = pessoaCarregada
 
     Scaffold(
         topBar = {
@@ -47,7 +67,8 @@ fun TelaDetalheCurtida(navController: NavController, pessoaId: Int) {
                 modifier = Modifier.fillMaxSize().padding(padding),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Essa pessoa não existe mais.")
+                // enquanto a consulta não termina, não mostra "não existe mais"
+                if (!carregando) Text("Essa pessoa não existe mais.")
             }
             return@Scaffold
         }
@@ -69,8 +90,11 @@ fun TelaDetalheCurtida(navController: NavController, pessoaId: Int) {
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(onClick = {
-                val conversa = AppDados.iniciarConversaComPessoa(pessoa)
-                navController.navigate(Rotas.detalheConversa(conversa.id))
+                escopo.launch {
+                    repositorio.iniciarConversaComPessoa(pessoa)?.let { conversa ->
+                        navController.navigate(Rotas.detalheConversa(conversa.id))
+                    }
+                }
             }) {
                 Text("Iniciar conversa")
             }

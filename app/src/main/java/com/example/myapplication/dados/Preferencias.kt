@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateListOf
+import com.example.myapplication.dados.banco.LocalEntity
 
 
 object Preferencias {
@@ -24,6 +25,7 @@ object Preferencias {
     var mostrarMeuPerfilNoAmigo by mutableStateOf(true)
     var mostrarAmigosNoMeuPerfil by mutableStateOf(true)
     var mostrarPerfisDoubleDate by mutableStateOf(true)
+    val locaisSalvos = mutableStateListOf<LocalEntity>()
 
     /** Alterna Mulheres -> Homens -> Todos -> Mulheres... */
     fun proximoInteresse() {

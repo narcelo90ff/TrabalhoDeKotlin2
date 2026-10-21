@@ -80,7 +80,6 @@ fun TelaListaConversas(navController: NavController) {
     var mostrarDialogo by remember { mutableStateOf(false) }
     var conversaEditando by remember { mutableStateOf<Conversa?>(null) }
 
-    // As listas vêm do banco (Room): lidas ao abrir a tela e relidas depois de cada alteração.
     var curtidas by remember { mutableStateOf<List<Pessoa>>(emptyList()) }
     var resumos by remember { mutableStateOf<List<ResumoConversa>>(emptyList()) }
 
@@ -228,7 +227,6 @@ private fun CartaoResumoCurtidas(total: Int, aoClicar: () -> Unit) {
                 .border(3.dp, AmareloChat, RoundedCornerShape(20.dp)),
             contentAlignment = Alignment.Center
         ) {
-            // bolinha amarela com a quantidade de curtidas
             Box(
                 modifier = Modifier
                     .size(38.dp)

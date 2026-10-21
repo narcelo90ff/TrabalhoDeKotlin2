@@ -29,7 +29,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun conversaDao(): ConversaDao
     abstract fun mensagemDao(): MensagemDao
 
-    /** Singleton: cria o banco uma única vez e devolve sempre a mesma instância. */
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
@@ -42,8 +41,7 @@ abstract class AppDatabase : RoomDatabase() {
                 )
                     .setDriver(BundledSQLiteDriver())
                     .setQueryCoroutineContext(Dispatchers.IO)
-                    // versão 1 -> 2 (novas tabelas pessoas/conversas/mensagens): como é um app de
-                    // estudo, recriamos o banco em vez de escrever a Migration.
+
                     .fallbackToDestructiveMigration(dropAllTables = true)
                     .build()
                     .also { INSTANCE = it }
@@ -51,7 +49,6 @@ abstract class AppDatabase : RoomDatabase() {
     }
 }
 
-/** Atalho mantido para o código que já usava BancoDeDados.obter(...). */
 object BancoDeDados {
     fun obter(contexto: Context): AppDatabase = AppDatabase.getInstance(contexto)
 }

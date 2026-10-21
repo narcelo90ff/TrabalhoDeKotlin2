@@ -1,7 +1,7 @@
 package com.example.myapplication.dados
 
 object Pix {
-    const val CHAVE_DEMO = "00000000-0000-4000-8000-000000000000" // troque pela sua chave Pix
+    const val CHAVE_DEMO = "00000000-0000-4000-8000-000000000000"
     const val NOME_RECEBEDOR = "MEU APLICATIVO"
     const val CIDADE = "SAO PAULO"
 

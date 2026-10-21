@@ -32,36 +32,13 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
-/**
- * Barra de rolagem que dá pra SEGURAR e ARRASTAR com o mouse (ou o dedo),
- * ou clicar no trilho para pular até aquele ponto. Só aparece quando a
- * tela realmente rola.
- *
- * Como usar: coloque dentro do MESMO Box da lista, alinhada à direita:
- *
- *   Box {
- *       Column(Modifier.verticalScroll(estado)) { ... }
- *       BarraRolagem(estado, Modifier.align(Alignment.CenterEnd))
- *   }
- *
- * Existem 3 versões: para verticalScroll (ScrollState), LazyColumn
- * (LazyListState) e LazyVerticalGrid (LazyGridState).
- */
 
-/** Descreve a rolagem de um jeito que o desenho da barra entende, não importa o tipo de lista. */
 private class AdaptadorRolagem(
     val rolavel: () -> Boolean,
-    /** altura do "polegar" (a parte que se segura), dada a altura do trilho em pixels */
     val alturaPolegar: (trilhoPx: Float) -> Float,
-    /** onde a rolagem está agora: 0 = começo, 1 = fim */
     val posicao: () -> Float,
-    /** rola até uma posição: 0 = começo, 1 = fim */
     val moverPara: (fracao: Float) -> Unit
 )
-
-// ---------------------------------------------------------------------------
-// Versão 1: Column com verticalScroll
-// ---------------------------------------------------------------------------
 
 @Composable
 fun BarraRolagem(estado: ScrollState, modifier: Modifier = Modifier) {
@@ -81,9 +58,6 @@ fun BarraRolagem(estado: ScrollState, modifier: Modifier = Modifier) {
     TrilhoBarra(adaptador, modifier)
 }
 
-// ---------------------------------------------------------------------------
-// Versão 2: LazyColumn
-// ---------------------------------------------------------------------------
 
 @Composable
 fun BarraRolagem(estado: LazyListState, modifier: Modifier = Modifier) {
@@ -124,9 +98,6 @@ fun BarraRolagem(estado: LazyListState, modifier: Modifier = Modifier) {
     TrilhoBarra(adaptador, modifier)
 }
 
-// ---------------------------------------------------------------------------
-// Versão 3: LazyVerticalGrid
-// ---------------------------------------------------------------------------
 
 @Composable
 fun BarraRolagem(estado: LazyGridState, modifier: Modifier = Modifier) {
@@ -167,7 +138,6 @@ fun BarraRolagem(estado: LazyGridState, modifier: Modifier = Modifier) {
     TrilhoBarra(adaptador, modifier)
 }
 
-/** Posição (0 a 1) calculada pela quantidade de itens: primeiro item visível / itens que "sobram". */
 private fun posicaoPorItens(
     total: Int,
     visiveis: Int,
@@ -179,9 +149,6 @@ private fun posicaoPorItens(
     return ((primeiroIndice + parteDoPrimeiro) / faltam).coerceIn(0f, 1f)
 }
 
-// ---------------------------------------------------------------------------
-// O desenho da barra e o tratamento do mouse/dedo
-// ---------------------------------------------------------------------------
 
 @Composable
 private fun TrilhoBarra(adaptador: AdaptadorRolagem, modifier: Modifier) {
@@ -190,11 +157,9 @@ private fun TrilhoBarra(adaptador: AdaptadorRolagem, modifier: Modifier) {
     val densidade = LocalDensity.current
     val minimoPx = with(densidade) { 56.dp.toPx() }
 
-    // Sempre usa os valores mais recentes, mesmo no meio de um arrasto
     val irPara by rememberUpdatedState<(Float) -> Unit> { yPx ->
         val polegar = adaptador.alturaPolegar(alturaTrilho).coerceIn(minimoPx, alturaTrilho)
         val espaco = (alturaTrilho - polegar).coerceAtLeast(1f)
-        // o ponteiro fica no MEIO do polegar, por isso o "- polegar / 2"
         adaptador.moverPara(((yPx - polegar / 2f) / espaco).coerceIn(0f, 1f))
     }
 
@@ -208,12 +173,10 @@ private fun TrilhoBarra(adaptador: AdaptadorRolagem, modifier: Modifier) {
             val polegar = adaptador.alturaPolegar(alturaTrilho).coerceIn(minimoPx, alturaTrilho)
             val topo = adaptador.posicao() * (alturaTrilho - polegar)
 
-            // faixa inteira: recebe o clique/toque do mouse e do dedo
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .pointerInput(Unit) {
-                        // clicar no trilho pula até ali
                         detectTapGestures(
                             onPress = { posicao ->
                                 irPara(posicao.y)
@@ -224,7 +187,6 @@ private fun TrilhoBarra(adaptador: AdaptadorRolagem, modifier: Modifier) {
                         )
                     }
                     .pointerInput(Unit) {
-                        // segurar e arrastar
                         detectDragGestures(
                             onDragStart = { posicao ->
                                 segurando = true
@@ -239,7 +201,6 @@ private fun TrilhoBarra(adaptador: AdaptadorRolagem, modifier: Modifier) {
                         )
                     }
             ) {
-                // trilho fininho, só pra mostrar por onde dá pra arrastar
                 Box(
                     modifier = Modifier
                         .align(Alignment.Center)
@@ -247,7 +208,6 @@ private fun TrilhoBarra(adaptador: AdaptadorRolagem, modifier: Modifier) {
                         .width(4.dp)
                         .background(Color(0x1AFFFFFF), RoundedCornerShape(50))
                 )
-                // o polegar (a parte que se segura)
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopCenter)

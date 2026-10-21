@@ -21,8 +21,6 @@ class MainActivity : ComponentActivity() {
         setContent {
             val contexto = LocalContext.current
 
-            // Ao abrir o app, lê do banco (Room) a carteira, os locais salvos
-            // e os totais de curtidas/conversas (na 1ª vez grava os dados de exemplo)
             LaunchedEffect(Unit) {
                 LojaRepositorio.obter(contexto).carregarCarteira()
                 LocalRepositorio.obter(contexto).carregar()

@@ -57,7 +57,6 @@ fun TelaDoubleDate(navController: NavController) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = {
-                // ao fechar, a aba Double Date fica selecionada no Descobrir
                 DescobrirEstado.aba = AbaDescobrir.DOUBLE_DATE
                 navController.popBackStack()
             }) {
@@ -153,7 +152,6 @@ fun TelaDoubleDate(navController: NavController) {
     }
 }
 
-/** Abre a folha de compartilhamento do Android com o convite do Double Date. */
 private fun compartilharConvite(context: Context) {
     val intent = Intent(Intent.ACTION_SEND).apply {
         type = "text/plain"

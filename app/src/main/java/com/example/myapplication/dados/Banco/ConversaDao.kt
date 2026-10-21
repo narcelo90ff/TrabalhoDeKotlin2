@@ -16,7 +16,6 @@ interface ConversaDao {
     @Query("SELECT * FROM conversas ORDER BY id")
     suspend fun buscarTodas(): List<Conversa>
 
-    /** Consulta filtrada por campo: usada pela tela de Detalhes da conversa. */
     @Query("SELECT * FROM conversas WHERE id = :id")
     suspend fun buscarPorId(id: Int): Conversa?
 

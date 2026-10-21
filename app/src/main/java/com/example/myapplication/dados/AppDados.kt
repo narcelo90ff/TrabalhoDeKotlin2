@@ -9,11 +9,7 @@ import com.example.myapplication.modelo.Perfil
 
 object AppDados {
 
-    /**
-     * Só os totais ficam em memória (para o badge da barra de baixo e o Perfil).
-     * As listas de Curtidas e Conversas agora vêm do Room; quem atualiza esses totais é o
-     * SocialRepositorio depois de cada operação no banco.
-     */
+
     var totalCurtidas by mutableIntStateOf(0)
     var totalConversas by mutableIntStateOf(0)
 

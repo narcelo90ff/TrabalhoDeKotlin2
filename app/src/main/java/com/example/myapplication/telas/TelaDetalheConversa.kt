@@ -76,7 +76,6 @@ fun TelaDetalheConversa(navController: NavController, conversaId: Int) {
     val repositorio = remember { SocialRepositorio.obter(contexto) }
     val escopo = rememberCoroutineScope()
 
-    // Detalhes: busca a conversa, a pessoa e as mensagens direto no banco pelo id da navegação.
     var conversaCarregada by remember { mutableStateOf<Conversa?>(null) }
     var pessoaCarregada by remember { mutableStateOf<Pessoa?>(null) }
     var mensagens by remember { mutableStateOf<List<Mensagem>>(emptyList()) }
@@ -116,7 +115,6 @@ fun TelaDetalheConversa(navController: NavController, conversaId: Int) {
                 .statusBarsPadding(),
             contentAlignment = Alignment.Center
         ) {
-            // enquanto a consulta não termina, não mostra "não existe mais"
             if (!carregando) Text("Essa conversa não existe mais.", color = Color.White)
         }
         return

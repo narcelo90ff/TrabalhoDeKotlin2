@@ -5,14 +5,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlin.math.abs
 
-/** Abas do topo da tela Descobrir. */
 enum class AbaDescobrir { PRA_VOCE, DOUBLE_DATE, ASTROLOGIA }
 
-/** Guarda qual aba está aberta (sobrevive à navegação entre telas). */
 object DescobrirEstado {
     var aba by mutableStateOf(AbaDescobrir.PRA_VOCE)
 
-    /** A tela de convidar amigos só abre sozinha na primeira vez que toca na aba Double Date. */
     var conviteDoubleDateVisto by mutableStateOf(false)
 }
 
@@ -23,7 +20,6 @@ object Astrologia {
     )
     val SIMBOLOS = listOf("♈", "♉", "♊", "♋", "♌", "♍", "♎", "♏", "♐", "♑", "♒", "♓")
 
-    /** Repete a cada 4 signos: Áries = fogo, Touro = terra, Gêmeos = ar, Câncer = água... */
     val ELEMENTOS = listOf("fogo", "terra", "ar", "água")
 
     val DESCRICAO_SOL = listOf(
@@ -41,7 +37,6 @@ object Astrologia {
         "Sonhador e sensível, você tem muita imaginação e um coração enorme."
     )
 
-    // Data de nascimento do usuário (a mesma que aparece na tela, sem edição, como no app).
     private const val DIA_NASCIMENTO = 2
     private const val MES_NASCIMENTO = 10
     const val DATA_NASCIMENTO = "2 de outubro de 2007"
@@ -55,15 +50,13 @@ object Astrologia {
 
     val indiceSol: Int get() = indiceSigno(DIA_NASCIMENTO, MES_NASCIMENTO)
 
-    // Lua e ascendente dependem de cálculo astronômico de verdade; aqui é só uma simulação
-    // determinística a partir do local/hora digitados.
+
     val indiceLua: Int? get() = if (temLocal) (indiceSol + 4 + local.trim().length) % 12 else null
     val indiceAscendente: Int?
         get() = if (temLocal && temHora) {
             ((hora.filter { it.isDigit() }.toIntOrNull() ?: 0) + local.trim().length) % 12
         } else null
 
-    // dia em que começa o signo que "abre" cada mês (jan..dez) e qual signo é esse
     private val inicioPorMes = intArrayOf(20, 19, 21, 20, 21, 21, 23, 23, 23, 23, 22, 22)
     private val signoQueComecaNoMes = intArrayOf(10, 11, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
 
@@ -74,7 +67,6 @@ object Astrologia {
 
     fun tituloCompatibilidade(signoDele: String): String = "${SIGNOS[indiceSol]} e $signoDele"
 
-    /** Texto de compatibilidade entre o signo do usuário e o do perfil (null se o signo for desconhecido). */
     fun compatibilidade(signoDele: String): String? {
         val b = SIGNOS.indexOf(signoDele)
         if (b < 0) return null

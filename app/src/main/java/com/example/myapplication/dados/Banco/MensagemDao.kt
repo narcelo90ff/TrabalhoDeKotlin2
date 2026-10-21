@@ -17,7 +17,6 @@ interface MensagemDao {
     @Query("SELECT * FROM mensagens WHERE conversaId = :conversaId ORDER BY id DESC LIMIT 1")
     suspend fun ultimaDaConversa(conversaId: Int): Mensagem?
 
-    /** Apaga as mensagens de uma conversa (usado quando a conversa é removida). */
     @Query("DELETE FROM mensagens WHERE conversaId = :conversaId")
     suspend fun excluirDaConversa(conversaId: Int)
 }

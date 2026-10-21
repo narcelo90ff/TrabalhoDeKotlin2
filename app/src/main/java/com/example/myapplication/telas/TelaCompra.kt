@@ -59,7 +59,6 @@ import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
-/** Uma linha de preço: "5 Boosts - R$ 21,98/cada". */
 private class OpcaoCompra(
     val quantidade: Int,
     val precoCada: Double,
@@ -67,7 +66,6 @@ private class OpcaoCompra(
     val economia: String? = null
 )
 
-/** As cores de cada versão da tela (rosa para Boost, azul para Super Likes). */
 private class TemaCompra(
     val fundoTopo: Color,
     val fundoBase: Color,
@@ -104,11 +102,7 @@ private val subtituloAba = listOf(
     "Seja um perfil de destaque numa área bem maior por 3 horas."
 )
 
-/**
- * Tela de compra de Boosts ou Super Likes (tipo = "BOOST" ou "SUPERLIKE").
- * Escolhe a quantidade, vê o total e "continua": a compra é gravada no banco (Room)
- * como pendente e o usuário vai para a tela de pagamento com QR Code Pix.
- */
+
 @Composable
 fun TelaCompra(navController: NavController, tipo: String) {
     val ehBoost = tipo == "BOOST"
@@ -136,7 +130,6 @@ fun TelaCompra(navController: NavController, tipo: String) {
             .background(Brush.verticalGradient(listOf(tema.fundoTopo, tema.fundoBase)))
             .statusBarsPadding()
     ) {
-        // ---- topo: X (e as abas no Boost) ----
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -189,7 +182,6 @@ fun TelaCompra(navController: NavController, tipo: String) {
             ) {
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // desenho do topo: avatar com raio (Boost) ou estrela (Super Like)
                 if (ehBoost) {
                     Box(contentAlignment = Alignment.BottomEnd) {
                         Box(
@@ -217,7 +209,6 @@ fun TelaCompra(navController: NavController, tipo: String) {
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // título com a segunda palavra em itálico, como no vídeo
                 Text(
                     text = buildAnnotatedString {
                         withStyle(SpanStyle(fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, color = tema.destaque)) {
@@ -267,7 +258,6 @@ fun TelaCompra(navController: NavController, tipo: String) {
                     modifier = Modifier.padding(vertical = 6.dp)
                 )
 
-                // convite para assinar o Gold
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -301,7 +291,6 @@ fun TelaCompra(navController: NavController, tipo: String) {
             BarraRolagem(estado = estadoRolagem, modifier = Modifier.align(Alignment.CenterEnd))
         }
 
-        // ---- botão fixo embaixo ----
         Box(
             modifier = Modifier
                 .fillMaxWidth()

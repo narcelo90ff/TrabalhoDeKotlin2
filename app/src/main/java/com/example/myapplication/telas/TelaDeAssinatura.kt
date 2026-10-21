@@ -62,7 +62,6 @@ import kotlin.math.roundToLong
 private const val NOME_APP = "TINDER"
 private val FundoAssinatura = Color(0xFF111111)
 
-/** Formata como dinheiro brasileiro: 46.99 -> "R$ 46,99". */
 internal fun formatarReais(valor: Double): String =
     "R$ " + String.format(Locale("pt", "BR"), "%.2f", valor)
 
@@ -135,11 +134,7 @@ private fun dadosDoPlano(chave: String): DadosPlano {
     }
 }
 
-/**
- * Tela de assinatura (Platinum, Gold, Plus ou Modo anônimo): escolhe o plano,
- * vê o que está incluído e "continua": a assinatura é gravada no banco (Room)
- * como pendente e o usuário vai para a tela de pagamento com QR Code Pix.
- */
+
 @Composable
 fun TelaAssinatura(navController: NavController, plano: String) {
     val dados = remember(plano) { dadosDoPlano(plano) }
@@ -158,7 +153,6 @@ fun TelaAssinatura(navController: NavController, plano: String) {
             .background(FundoAssinatura)
             .statusBarsPadding()
     ) {
-        // ---- topo: X e o logo com o selo do plano ----
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -185,7 +179,6 @@ fun TelaAssinatura(navController: NavController, plano: String) {
             }
         }
 
-        // ---- conteúdo que rola ----
         Box(modifier = Modifier.weight(1f)) {
             Column(
                 modifier = Modifier
@@ -207,7 +200,6 @@ fun TelaAssinatura(navController: NavController, plano: String) {
                     modifier = Modifier.padding(start = 20.dp, top = 8.dp, bottom = 12.dp)
                 )
 
-                // cartões dos planos: rolam para o lado
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = 20.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -223,7 +215,6 @@ fun TelaAssinatura(navController: NavController, plano: String) {
                     }
                 }
 
-                // bolinhas: mostram qual plano está escolhido
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -241,7 +232,6 @@ fun TelaAssinatura(navController: NavController, plano: String) {
                     }
                 }
 
-                // o que está incluído
                 Column(
                     modifier = Modifier
                         .padding(horizontal = 20.dp, vertical = 24.dp)
@@ -273,7 +263,6 @@ fun TelaAssinatura(navController: NavController, plano: String) {
             BarraRolagem(estado = estadoRolagem, modifier = Modifier.align(Alignment.CenterEnd))
         }
 
-        // ---- rodapé fixo: texto legal + botão Continuar ----
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -327,7 +316,6 @@ fun TelaAssinatura(navController: NavController, plano: String) {
     }
 }
 
-/** "Popular" no primeiro cartão; nos outros, quanto se economiza em relação à semana. */
 private fun rotuloDaOpcao(indice: Int, opcao: OpcaoPlano, primeira: OpcaoPlano): String {
     if (indice == 0) return "Popular"
     val economia = ((1 - opcao.precoSemana / primeira.precoSemana) * 100).roundToInt()

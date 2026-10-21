@@ -17,17 +17,14 @@ object Preferencias {
     var faixaEtaria by mutableStateOf(18f..28f)
     var mostrarForaDaFaixa by mutableStateOf(true)
 
-    /** Locais do Modo Passaporte; o atual aparece nas Configurações e no Perfil. */
     val locais = mutableStateListOf("São Paulo, SP")
     var localAtual by mutableStateOf("São Paulo, SP")
 
-    // Configurações do Double Date
     var mostrarMeuPerfilNoAmigo by mutableStateOf(true)
     var mostrarAmigosNoMeuPerfil by mutableStateOf(true)
     var mostrarPerfisDoubleDate by mutableStateOf(true)
     val locaisSalvos = mutableStateListOf<LocalEntity>()
 
-    /** Alterna Mulheres -> Homens -> Todos -> Mulheres... */
     fun proximoInteresse() {
         val opcoes = listOf("Mulheres", "Homens", "Todos")
         interesseEm = opcoes[(opcoes.indexOf(interesseEm) + 1) % opcoes.size]

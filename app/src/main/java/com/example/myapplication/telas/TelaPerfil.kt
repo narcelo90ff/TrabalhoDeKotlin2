@@ -353,7 +353,6 @@ fun TelaPerfil(navController: NavController) {
             Spacer(modifier = Modifier.height(210.dp))
         }
 
-        // barra de rolagem que dá pra segurar e arrastar (acima do banner Gold)
         BarraRolagem(
             estado = estadoRolagem,
             modifier = Modifier
@@ -370,7 +369,6 @@ fun TelaPerfil(navController: NavController) {
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             BotaoRedondoPerfil(Icons.Filled.Group, "Amigos") { }
-            // abre a tela de Configurações de verdade
             BotaoRedondoPerfil(Icons.Filled.Settings, "Configurações") {
                 navController.navigate(Rotas.CONFIGURACOES)
             }

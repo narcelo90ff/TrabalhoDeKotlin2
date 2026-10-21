@@ -13,18 +13,13 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/** Uma linha da lista de conversas: a conversa, a última mensagem e a pessoa (se houver). */
 data class ResumoConversa(
     val conversa: Conversa,
     val ultimaMensagem: String?,
     val pessoa: Pessoa?
 )
 
-/**
- * Único ponto de acesso ao banco para Curtidas (Pessoa) e Conversas/Mensagens.
- * Toda operação roda em Dispatchers.IO e tem try/catch com Log.e, então a interface
- * nunca trava nem quebra por causa de uma falha no banco.
- */
+
 class SocialRepositorio private constructor(
     private val pessoaDao: PessoaDao,
     private val conversaDao: ConversaDao,
@@ -44,9 +39,7 @@ class SocialRepositorio private constructor(
             }
         }
 
-    // ---------- inicialização ----------
 
-    /** Na primeira abertura do app grava os dados de exemplo (os mesmos do Trabalho 2). */
     suspend fun carregarInicial() {
         io(Unit) {
             if (!prefs.getBoolean(CHAVE_SEED, false)) {
@@ -72,14 +65,12 @@ class SocialRepositorio private constructor(
         mensagemDao.inserir(Mensagem(conversaId = conversaCamila, texto = "Combinado então", minha = false))
     }
 
-    /** Atualiza os contadores usados no badge da barra de baixo e no Perfil. */
     suspend fun atualizarContagens() {
         val totais = io<Pair<Int, Int>?>(null) { pessoaDao.contar() to conversaDao.contar() } ?: return
         AppDados.totalCurtidas = totais.first
         AppDados.totalConversas = totais.second
     }
 
-    // ---------- Curtidas (Pessoa) ----------
 
     suspend fun listarPessoas(): List<Pessoa> = io(emptyList()) { pessoaDao.buscarTodas() }
 
@@ -107,7 +98,6 @@ class SocialRepositorio private constructor(
         atualizarContagens()
     }
 
-    /** Curtir um perfil do Descobrir: cria a Pessoa no banco (ou reaproveita a que já existe). */
     suspend fun curtir(perfil: Perfil, favorito: Boolean = false): Pessoa? {
         val pessoa = io<Pessoa?>(null) {
             val existente = pessoaDao.buscarPorNomeEIdade(perfil.nome, perfil.idade)
@@ -136,7 +126,6 @@ class SocialRepositorio private constructor(
         return pessoa
     }
 
-    // ---------- Conversas ----------
 
     suspend fun listarResumos(): List<ResumoConversa> = io(emptyList()) {
         conversaDao.buscarTodas().map { conversa ->
@@ -159,7 +148,6 @@ class SocialRepositorio private constructor(
         return nova
     }
 
-    /** Abre a conversa já existente com a pessoa ou cria uma nova. */
     suspend fun iniciarConversaComPessoa(pessoa: Pessoa): Conversa? {
         val conversa = io<Conversa?>(null) {
             conversaDao.buscarPorPessoaId(pessoa.id) ?: run {
@@ -185,7 +173,6 @@ class SocialRepositorio private constructor(
         atualizarContagens()
     }
 
-    // ---------- Mensagens ----------
 
     suspend fun listarMensagens(conversaId: Int): List<Mensagem> =
         io(emptyList()) { mensagemDao.buscarPorConversa(conversaId) }

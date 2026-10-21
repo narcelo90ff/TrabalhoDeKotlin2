@@ -24,10 +24,7 @@ object Rotas {
     fun detalheCurtida(pessoaId: Int) = "detalhe_curtida/$pessoaId"
     fun detalheConversa(conversaId: Int) = "detalhe_conversa/$conversaId"
     fun explorarDetalhe(categoria: String) = "explorar_detalhe/$categoria"
-    /** plano: "PLATINUM", "GOLD", "PLUS" ou "ANONIMO" */
     fun assinatura(plano: String) = "assinatura/$plano"
-    /** tipo: "BOOST" ou "SUPERLIKE" */
     fun compra(tipo: String) = "compra/$tipo"
-    /** compraId: id da compra pendente salva no banco (Room). */
     fun pagamento(compraId: Long) = "pagamento/$compraId"
 }

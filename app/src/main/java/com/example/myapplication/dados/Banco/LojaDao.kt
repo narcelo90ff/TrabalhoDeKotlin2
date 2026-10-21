@@ -31,11 +31,7 @@ abstract class LojaDao {
     @Upsert
     abstract suspend fun salvarCarteira(carteira: CarteiraEntity)
 
-    /**
-     * Confirma o pagamento e credita o item na carteira, tudo ou nada
-     * (se algo falhar no meio, nada é gravado). Se a compra já não estiver
-     * pendente, não credita de novo.
-     */
+
     @Transaction
     open suspend fun confirmarPagamento(id: Long): CarteiraEntity? {
         val compra = buscarCompra(id) ?: return null
@@ -52,7 +48,6 @@ abstract class LojaDao {
         return nova
     }
 
-    /** Cancela só se ainda estiver pendente (uma compra paga não pode ser cancelada). */
     @Transaction
     open suspend fun cancelarSePendente(id: Long) {
         val compra = buscarCompra(id) ?: return

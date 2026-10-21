@@ -69,10 +69,7 @@ private val TextoFraco = Color(0xFFB5B5B5)
 
 private enum class Etapa { INTRO, FORM, LOCAL, HORA, CONECTANDO, SOBRE }
 
-/**
- * Fluxo do Modo Astrologia: apresentação -> mix de signos (data/lugar/hora) ->
- * "conectando suas estrelas" -> "Sobre você" -> volta pro Descobrir já na aba Astrologia.
- */
+
 @Composable
 fun TelaAstrologia(navController: NavController) {
     var etapa by rememberSaveable {
@@ -169,7 +166,6 @@ private fun BotaoBranco(texto: String, aoClicar: () -> Unit) {
     }
 }
 
-// ---------- 1. Apresentação ----------
 
 @Composable
 private fun EtapaIntro(aoContinuar: () -> Unit, aoFechar: () -> Unit) {
@@ -217,7 +213,6 @@ private fun EtapaIntro(aoContinuar: () -> Unit, aoFechar: () -> Unit) {
     }
 }
 
-// ---------- 2. Mix de signos ----------
 
 @Composable
 private fun EtapaForm(
@@ -320,7 +315,6 @@ private fun CampoAstro(
     }
 }
 
-// ---------- Digitar local / hora ----------
 
 @Composable
 private fun EtapaEntradaTexto(
@@ -368,7 +362,6 @@ private fun EtapaEntradaTexto(
     }
 }
 
-// ---------- 3. Conectando suas estrelas ----------
 
 @Composable
 private fun EtapaConectando(ponto: Int, aoFechar: () -> Unit) {
@@ -406,7 +399,6 @@ private fun EtapaConectando(ponto: Int, aoFechar: () -> Unit) {
     }
 }
 
-// ---------- 4. Sobre você ----------
 
 @Composable
 private fun EtapaSobreVoce(

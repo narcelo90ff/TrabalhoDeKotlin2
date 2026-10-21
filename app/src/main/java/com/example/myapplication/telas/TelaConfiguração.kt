@@ -85,7 +85,6 @@ private const val NOME_APP = "TINDER"
 
 @Composable
 fun TelaConfiguracoes(navController: NavController) {
-    // ---- estados da tela (tudo mexe de verdade) ----
     var visibilidade by remember { mutableStateOf("Padrão") }
     var descobertaAtiva by remember { mutableStateOf(true) }
     var chatVerificacao by remember { mutableStateOf(false) }
@@ -188,11 +187,9 @@ private fun SecaoPlanos(navController: NavController) {
     }
     Spacer(modifier = Modifier.height(10.dp))
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        // o modo anônimo é do plano Plus: abre a tela de assinatura dele
         CartaoAtalho(Icons.Filled.VisibilityOff, Color.White, "Usar modo anônimo", Modifier.weight(1f)) {
             navController.navigate(Rotas.assinatura("ANONIMO"))
         }
-        // o Passaporte leva para a escolha de localização
         CartaoAtalho(Icons.Filled.Flight, CfgVermelho, "Usar o Modo Passaporte", Modifier.weight(1f)) {
             navController.navigate(Rotas.LOCALIZACAO)
         }

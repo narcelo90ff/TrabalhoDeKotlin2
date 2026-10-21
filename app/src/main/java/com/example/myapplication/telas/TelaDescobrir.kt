@@ -137,7 +137,6 @@ fun DeslizarPerfis(
     }
 
     val aoPassar: () -> Unit = { proximo() }
-    // curtir grava a Pessoa no banco (Room) em segundo plano e já passa pro próximo perfil
     val aoCurtir: () -> Unit = {
         escopo.launch {
             repositorio.curtir(perfil)
@@ -477,7 +476,6 @@ private fun FotoPerfil(
     }
 }
 
-/** Uma aba do topo (Pra você / Double Date / Astrologia). A selecionada ganha o fundo escuro. */
 @Composable
 private fun ItemAba(
     texto: String,
@@ -660,7 +658,6 @@ private fun DetalhePerfil(
             }
         }
 
-        // barra de rolagem que dá pra segurar e arrastar (entre o cabeçalho e os botões)
         BarraRolagem(
             estado = estadoRolagem,
             modifier = Modifier

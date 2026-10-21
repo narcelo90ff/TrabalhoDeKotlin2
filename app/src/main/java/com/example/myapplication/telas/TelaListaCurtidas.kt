@@ -81,7 +81,6 @@ fun TelaListaCurtidas(navController: NavController) {
     var ordem by remember { mutableStateOf("Recomendado") }
     var mostrarOrdenacao by remember { mutableStateOf(false) }
 
-    // A lista vem do banco (Room): é lida ao abrir a tela e relida depois de cada alteração.
     var curtidas by remember { mutableStateOf<List<Pessoa>>(emptyList()) }
     LaunchedEffect(Unit) { curtidas = repositorio.listarPessoas() }
 
@@ -176,7 +175,6 @@ fun TelaListaCurtidas(navController: NavController) {
             }
         }
 
-        // barra de rolagem que dá pra segurar e arrastar (no cantinho, fora dos cartões)
         BarraRolagem(
             estado = estadoGrade,
             modifier = Modifier
@@ -246,7 +244,7 @@ private fun CartaoCurtida(
             .fillMaxWidth()
             .aspectRatio(0.72f)
             .clip(RoundedCornerShape(24.dp))
-            .clickable(onClick = aoClicar) // clicar no card (fora dos ícones) abre o Detalhe
+            .clickable(onClick = aoClicar)
     ) {
         FotoOuInicial(
             foto = pessoa.foto,
@@ -351,7 +349,7 @@ private fun BotaoMini(
 private fun DialogNovaCurtida(
     aoFechar: () -> Unit,
     aoConfirmar: (String, Int, String) -> Unit,
-    inicial: Pessoa? = null // null = adicionar; preenchido = editar
+    inicial: Pessoa? = null
 ) {
     var nomeNovo by remember { mutableStateOf(inicial?.nome ?: "") }
     var idadeNova by remember { mutableStateOf(inicial?.idade?.toString() ?: "") }
@@ -411,15 +409,11 @@ private val opcoesOrdem = listOf(
 )
 
 private fun ordenarCurtidas(curtidas: List<Pessoa>, ordem: String): List<Pessoa> = when (ordem) {
-    // quem entrou por último (maior id) primeiro
     "Mais recentes" -> curtidas.sortedByDescending { it.id }
-    // favoritos no topo (a ordem original se mantém dentro de cada grupo)
     "Destaques" -> curtidas.sortedByDescending { it.favorito }
-    // mais perto primeiro; quem não tem distância vai pro fim
     "Distância" -> curtidas.sortedBy { it.distanciaKm ?: Int.MAX_VALUE }
-    // o app não tem horário real de acesso, então isso é simulado (dado fictício)
     "Online recentemente" -> curtidas.sortedBy { (it.id * 37) % 90 }
-    else -> curtidas.toList() // Recomendado = ordem original
+    else -> curtidas.toList()
 }
 
 @Composable

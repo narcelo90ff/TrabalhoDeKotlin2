@@ -76,7 +76,6 @@ fun BottomNavBar(navController: NavController) {
                     .background(if (selecionado) Color(0xFF3A3A3A) else Color.Transparent)
                     .clickable {
                         navController.navigate(item.rota) {
-                            // Evita empilhar várias cópias da mesma aba
                             popUpTo(navController.graph.findStartDestination().id) {
                                 saveState = true
                             }
@@ -87,7 +86,6 @@ fun BottomNavBar(navController: NavController) {
                     .padding(vertical = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // bolinha vermelha com a quantidade de curtidas, como no print
                 val qtdCurtidas = AppDados.totalCurtidas
                 BadgedBox(
                     badge = {

@@ -41,7 +41,6 @@ fun TelaDetalheCurtida(navController: NavController, pessoaId: Int) {
     val repositorio = remember { SocialRepositorio.obter(contexto) }
     val escopo = rememberCoroutineScope()
 
-    // Detalhes: busca a pessoa direto no banco pelo id recebido na navegação.
     var pessoaCarregada by remember { mutableStateOf<Pessoa?>(null) }
     var carregando by remember { mutableStateOf(true) }
     LaunchedEffect(pessoaId) {
@@ -67,7 +66,6 @@ fun TelaDetalheCurtida(navController: NavController, pessoaId: Int) {
                 modifier = Modifier.fillMaxSize().padding(padding),
                 contentAlignment = Alignment.Center
             ) {
-                // enquanto a consulta não termina, não mostra "não existe mais"
                 if (!carregando) Text("Essa pessoa não existe mais.")
             }
             return@Scaffold
@@ -102,7 +100,6 @@ fun TelaDetalheCurtida(navController: NavController, pessoaId: Int) {
     }
 }
 
-/** Cálculo fictício só paa exemplo didático, não é ciência nenhuma. */
 private fun calcularCompatibilidade(idade: Int): Int {
     val base = 100 - abs(idade - 25) * 2
     return base.coerceIn(40, 99)

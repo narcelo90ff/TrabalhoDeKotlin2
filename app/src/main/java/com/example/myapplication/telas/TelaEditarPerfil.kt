@@ -136,7 +136,6 @@ private fun CampoTexto(
     )
 }
 
-// ---------------------------------------------------------------- BIO
 
 @Composable
 fun TelaEditarBio(navController: NavController) {
@@ -212,7 +211,6 @@ fun TelaEditarBio(navController: NavController) {
     }
 }
 
-// ---------------------------------------------------------------- PERGUNTAS
 
 @Composable
 fun TelaEditarPergunta(navController: NavController) {
@@ -297,7 +295,6 @@ fun TelaEditarPergunta(navController: NavController) {
     }
 }
 
-// ---------------------------------------------------------------- PRIMEIRO ENCONTRO
 
 @Composable
 fun TelaEditarEncontro(navController: NavController) {
@@ -359,7 +356,6 @@ fun TelaEditarEncontro(navController: NavController) {
     }
 }
 
-// ---------------------------------------------------------------- SELEÇÃO DE ITENS
 
 @Composable
 fun TelaSelecaoItens(navController: NavController, tipo: TipoSelecao) {

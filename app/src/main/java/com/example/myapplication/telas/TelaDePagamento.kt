@@ -71,6 +71,7 @@ private val CartaoPagamento = Color(0xFF1E1E1E)
 private val VerdePix = Color(0xFF32BCAD)
 private val TextoFracoPagamento = Color(0xFFB0B0B0)
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TelaPagamento(navController: NavController, compraId: Long) {
     val contexto = LocalContext.current
@@ -210,6 +211,7 @@ private fun CompraIndisponivel(modifier: Modifier = Modifier) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun PagamentoPendente(
     compra: CompraEntity,

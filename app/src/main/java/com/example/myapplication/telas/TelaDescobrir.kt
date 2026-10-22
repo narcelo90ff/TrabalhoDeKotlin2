@@ -128,7 +128,6 @@ fun DeslizarPerfis(
     val aba = if (mostrarAbas) DescobrirEstado.aba else AbaDescobrir.PRA_VOCE
     val posicao = indice.mod(perfis.size)
     val perfil = perfis[posicao]
-    // no Double Date cada card mostra uma dupla: o perfil atual + o próximo da lista
     val parceiro: Perfil? =
         if (aba == AbaDescobrir.DOUBLE_DATE && perfis.size > 1) perfis[(posicao + 1) % perfis.size] else null
 
@@ -138,9 +137,6 @@ fun DeslizarPerfis(
     }
 
     val aoPassar: () -> Unit = { proximo() }
-    // Registra a curtida. Só UMA pessoa do app dá match (ID_PESSOA_MATCH, o Kauã);
-    // curtir qualquer outra não abre a tela de match. No Double Date, o match
-    // acontece se essa pessoa estiver na dupla.
     suspend fun registrarCurtida(favorito: Boolean) {
         val pessoa = repositorio.curtir(perfil, favorito = favorito)
         val pessoaParceiro = parceiro?.let { repositorio.curtir(it) }
@@ -184,7 +180,6 @@ fun DeslizarPerfis(
                 }
             }
             AbaDescobrir.ASTROLOGIA -> {
-                // ainda não configurou: abre o fluxo; senão só troca de aba
                 if (Astrologia.ativo) {
                     DescobrirEstado.aba = nova
                 } else {
@@ -224,7 +219,6 @@ fun DeslizarPerfis(
         )
     }
 
-    // tela "Deu Match!" (vale para Pra você, Explorar, Astrologia e Double Date)
     matchAtual?.let { match ->
         TelaMatch(
             perfil = match.perfil,

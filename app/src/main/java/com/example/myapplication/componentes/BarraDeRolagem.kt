@@ -50,7 +50,6 @@ fun BarraRolagem(estado: ScrollState, modifier: Modifier = Modifier) {
                 if (estado.maxValue > 0) estado.value.toFloat() / estado.maxValue else 0f
             },
             moverPara = { fracao ->
-                // dispatchRawDelta rola na hora, sem precisar de coroutine
                 estado.dispatchRawDelta(fracao * estado.maxValue - estado.value)
             }
         )

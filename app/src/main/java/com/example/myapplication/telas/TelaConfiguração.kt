@@ -200,7 +200,6 @@ private fun SecaoPlanos(navController: NavController) {
 private fun SecaoConta() {
     TituloSecao("Configurações de conta")
     GrupoCartao {
-        // dados fictícios (placeholder) — nunca dados reais de ninguém
         LinhaNavegacao(rotulo = "Número de telefone", valor = "+55 41 9xxxx-xxxx")
         DivisorFino()
         LinhaNavegacao(rotulo = "Contas conectadas")

@@ -171,7 +171,6 @@ fun TelaCompra(navController: NavController, tipo: String) {
             }
         }
 
-        // ---- conteúdo que rola ----
         Box(modifier = Modifier.weight(1f)) {
             Column(
                 modifier = Modifier
@@ -339,7 +338,6 @@ private fun CartaoOpcaoCompra(
     val nomeQuantidade = "${opcao.quantidade} $nomeItem" + if (opcao.quantidade > 1) "s" else ""
 
     if (selecionada) {
-        // selecionada: preenchida com a cor de destaque
         Row(
             modifier = Modifier
                 .fillMaxWidth()

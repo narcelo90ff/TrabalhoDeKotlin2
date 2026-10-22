@@ -166,7 +166,6 @@ private fun ConteudoMatch(
                 modifier = Modifier.padding(end = 12.dp)
             )
             Box(modifier = Modifier.padding(bottom = 44.dp)) {
-                // "eco" vazado logo abaixo, como na tela original
                 Text(
                     text = "MATCH!",
                     style = TextStyle(

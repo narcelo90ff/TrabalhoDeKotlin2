@@ -78,6 +78,7 @@ fun TelaListaConversas(navController: NavController) {
     val escopo = rememberCoroutineScope()
 
     var mostrarDialogo by remember { mutableStateOf(false) }
+    var folhaSeguranca by remember { mutableStateOf(FolhaSeguranca.NENHUMA) }
     var conversaEditando by remember { mutableStateOf<Conversa?>(null) }
 
     var curtidas by remember { mutableStateOf<List<Pessoa>>(emptyList()) }
@@ -102,7 +103,13 @@ fun TelaListaConversas(navController: NavController) {
             .background(Color.Black)
             .statusBarsPadding()
     ) {
-        CabecalhoChat(aoNovaConversa = { mostrarDialogo = true })
+        CabecalhoChat(
+            aoNovaConversa = { mostrarDialogo = true },
+            aoSeguranca = { folhaSeguranca = FolhaSeguranca.KIT },
+            aoConvidar = {
+                navController.navigate(Rotas.DOUBLE_DATE) { launchSingleTop = true }
+            }
+        )
 
         Text(
             text = "Novos matches",
@@ -137,6 +144,25 @@ fun TelaListaConversas(navController: NavController) {
         )
     }
 
+    when (folhaSeguranca) {
+        FolhaSeguranca.KIT -> KitSegurancaSheet(
+            aoFechar = { folhaSeguranca = FolhaSeguranca.NENHUMA },
+            aoDenunciar = { folhaSeguranca = FolhaSeguranca.DENUNCIA },
+            aoConfigMensagens = {
+                folhaSeguranca = FolhaSeguranca.NENHUMA
+                navController.navigate(Rotas.CONFIG_MENSAGENS) { launchSingleTop = true }
+            },
+            aoCentralSeguranca = {
+                folhaSeguranca = FolhaSeguranca.NENHUMA
+                navController.navigate(Rotas.CENTRAL_SEGURANCA) { launchSingleTop = true }
+            }
+        )
+        FolhaSeguranca.DENUNCIA -> DenunciaSheet(
+            aoFechar = { folhaSeguranca = FolhaSeguranca.NENHUMA }
+        )
+        FolhaSeguranca.NENHUMA -> Unit
+    }
+
     if (mostrarDialogo) {
         DialogNovaConversa(
             aoFechar = { mostrarDialogo = false },
@@ -164,7 +190,11 @@ fun TelaListaConversas(navController: NavController) {
 
 
 @Composable
-private fun CabecalhoChat(aoNovaConversa: () -> Unit) {
+private fun CabecalhoChat(
+    aoNovaConversa: () -> Unit,
+    aoSeguranca: () -> Unit,
+    aoConvidar: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -181,10 +211,10 @@ private fun CabecalhoChat(aoNovaConversa: () -> Unit) {
                 .padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { }) {
+            IconButton(onClick = aoSeguranca) {
                 Icon(Icons.Filled.Shield, contentDescription = "Segurança", tint = Color.White)
             }
-            IconButton(onClick = { }) {
+            IconButton(onClick = aoConvidar) {
                 Icon(Icons.Filled.Link, contentDescription = "Convidar", tint = Color.White)
             }
             IconButton(onClick = aoNovaConversa) {

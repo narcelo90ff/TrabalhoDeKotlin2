@@ -9,6 +9,8 @@ object Rotas {
     const val PERFIL = "perfil"
     const val DOUBLE_DATE = "double_date"
     const val DOUBLE_DATE_CONFIG = "double_date_config"
+    const val CENTRAL_SEGURANCA = "central_seguranca"
+    const val CONFIG_MENSAGENS = "config_mensagens"
     const val ASTROLOGIA = "astrologia"
     const val CONFIGURACOES = "configuracoes"
     const val FILTROS = "filtros"
@@ -16,6 +18,10 @@ object Rotas {
     const val ASSINATURA = "assinatura/{plano}"
     const val COMPRA = "compra/{tipo}"
     const val PAGAMENTO = "pagamento/{compraId}"
+    const val EDITAR_BIO = "editar_bio"
+    const val EDITAR_PERGUNTA = "editar_pergunta"
+    const val EDITAR_ENCONTRO = "editar_encontro"
+    const val SELECIONAR = "selecionar/{tipo}"
 
     const val DETALHE_CURTIDA = "detalhe_curtida/{pessoaId}"
     const val DETALHE_CONVERSA = "detalhe_conversa/{conversaId}"
@@ -27,4 +33,5 @@ object Rotas {
     fun assinatura(plano: String) = "assinatura/$plano"
     fun compra(tipo: String) = "compra/$tipo"
     fun pagamento(compraId: Long) = "pagamento/$compraId"
+    fun selecionar(tipo: String) = "selecionar/$tipo"
 }

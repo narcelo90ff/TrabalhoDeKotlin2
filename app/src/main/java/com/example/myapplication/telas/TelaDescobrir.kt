@@ -118,6 +118,7 @@ fun DeslizarPerfis(
 
     var indice by rememberSaveable { mutableIntStateOf(0) }
     var mostrandoDetalhe by rememberSaveable { mutableStateOf(false) }
+    var matchAtual by remember { mutableStateOf<DadosMatch?>(null) }
 
     if (perfis.isEmpty()) {
         TelaSemPerfis(onRecomecar = { indice = 0 })
@@ -137,18 +138,24 @@ fun DeslizarPerfis(
     }
 
     val aoPassar: () -> Unit = { proximo() }
-    val aoCurtir: () -> Unit = {
-        escopo.launch {
-            repositorio.curtir(perfil)
-            parceiro?.let { repositorio.curtir(it) }
+    // Registra a curtida. Só UMA pessoa do app dá match (ID_PESSOA_MATCH, o Kauã);
+    // curtir qualquer outra não abre a tela de match. No Double Date, o match
+    // acontece se essa pessoa estiver na dupla.
+    suspend fun registrarCurtida(favorito: Boolean) {
+        val pessoa = repositorio.curtir(perfil, favorito = favorito)
+        val pessoaParceiro = parceiro?.let { repositorio.curtir(it) }
+        val alvo = listOfNotNull(perfil, parceiro).firstOrNull { it.id == ID_PESSOA_MATCH }
+        if (alvo != null) {
+            matchAtual = DadosMatch(alvo, if (alvo.id == perfil.id) pessoa else pessoaParceiro)
         }
+    }
+
+    val aoCurtir: () -> Unit = {
+        escopo.launch { registrarCurtida(favorito = false) }
         proximo()
     }
     val aoFavoritar: () -> Unit = {
-        escopo.launch {
-            repositorio.curtir(perfil, favorito = true)
-            parceiro?.let { repositorio.curtir(it) }
-        }
+        escopo.launch { registrarCurtida(favorito = true) }
         proximo()
     }
     val aoVoltar: () -> Unit = {
@@ -214,6 +221,25 @@ fun DeslizarPerfis(
             aoResponder = aoResponder,
             mostrarAbas = mostrarAbas,
             mostrarInteresses = mostrarInteresses
+        )
+    }
+
+    // tela "Deu Match!" (vale para Pra você, Explorar, Astrologia e Double Date)
+    matchAtual?.let { match ->
+        TelaMatch(
+            perfil = match.perfil,
+            aoFechar = { matchAtual = null },
+            aoEnviar = { texto ->
+                matchAtual = null
+                escopo.launch {
+                    match.pessoa
+                        ?.let { pessoa -> repositorio.iniciarConversaComPessoa(pessoa) }
+                        ?.let { conversa ->
+                            repositorio.enviarMensagem(conversa.id, texto)
+                            navController.navigate(Rotas.detalheConversa(conversa.id))
+                        }
+                }
+            }
         )
     }
 }

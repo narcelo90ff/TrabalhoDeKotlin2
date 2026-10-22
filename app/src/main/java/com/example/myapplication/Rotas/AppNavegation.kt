@@ -15,6 +15,8 @@ import androidx.navigation.navArgument
 import com.example.myapplication.componentes.BottomNavBar
 import com.example.myapplication.componentes.rotaTemBottomBar
 import com.example.myapplication.telas.TelaAstrologia
+import com.example.myapplication.telas.TelaCentralSeguranca
+import com.example.myapplication.telas.TelaConfigMensagens
 import com.example.myapplication.telas.TelaConfiguracoes
 import com.example.myapplication.telas.TelaDoubleDateConfig
 import com.example.myapplication.telas.TelaDescobrir
@@ -31,6 +33,11 @@ import com.example.myapplication.telas.TelaAssinatura
 import com.example.myapplication.telas.TelaCompra
 import com.example.myapplication.telas.TelaLocalizacao
 import com.example.myapplication.telas.TelaPagamento
+import com.example.myapplication.telas.TelaEditarBio
+import com.example.myapplication.telas.TelaEditarPergunta
+import com.example.myapplication.telas.TelaEditarEncontro
+import com.example.myapplication.telas.TelaSelecaoItens
+import com.example.myapplication.dados.TipoSelecao
 
 @Composable
 fun AppNavigation() {
@@ -87,11 +94,34 @@ fun AppNavigation() {
             composable(Rotas.PERFIL) {
                 TelaPerfil(navController = navController)
             }
+            composable(Rotas.EDITAR_BIO) {
+                TelaEditarBio(navController = navController)
+            }
+            composable(Rotas.EDITAR_ENCONTRO) {
+                TelaEditarEncontro(navController = navController)
+            }
+            composable(Rotas.EDITAR_PERGUNTA) {
+                TelaEditarPergunta(navController = navController)
+            }
+            composable(
+                route = Rotas.SELECIONAR,
+                arguments = listOf(navArgument("tipo") { type = NavType.StringType })
+            ) { entrada ->
+                val nome = entrada.arguments?.getString("tipo") ?: "HOBBIES"
+                val tipo = TipoSelecao.entries.firstOrNull { it.name == nome } ?: TipoSelecao.HOBBIES
+                TelaSelecaoItens(navController = navController, tipo = tipo)
+            }
             composable(Rotas.DOUBLE_DATE) {
                 TelaDoubleDate(navController = navController)
             }
             composable(Rotas.DOUBLE_DATE_CONFIG) {
                 TelaDoubleDateConfig(navController = navController)
+            }
+            composable(Rotas.CENTRAL_SEGURANCA) {
+                TelaCentralSeguranca(navController = navController)
+            }
+            composable(Rotas.CONFIG_MENSAGENS) {
+                TelaConfigMensagens(navController = navController)
             }
             composable(Rotas.ASTROLOGIA) {
                 TelaAstrologia(navController = navController)

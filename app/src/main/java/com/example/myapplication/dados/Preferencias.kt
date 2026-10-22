@@ -23,6 +23,9 @@ object Preferencias {
     var mostrarMeuPerfilNoAmigo by mutableStateOf(true)
     var mostrarAmigosNoMeuPerfil by mutableStateOf(true)
     var mostrarPerfisDoubleDate by mutableStateOf(true)
+
+    var perfilVerificado by mutableStateOf(false)
+    var chatSomenteVerificados by mutableStateOf(false)
     val locaisSalvos = mutableStateListOf<LocalEntity>()
 
     fun proximoInteresse() {

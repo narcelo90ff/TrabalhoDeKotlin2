@@ -1,5 +1,6 @@
 package com.example.myapplication.telas
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -58,6 +59,8 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -71,6 +74,8 @@ import com.example.myapplication.navegacao.Rotas
 import com.example.myapplication.componentes.BarraRolagem
 import com.example.myapplication.dados.Carteira
 import com.example.myapplication.dados.Preferencias
+import com.example.myapplication.dados.PerfilDados
+import com.example.myapplication.dados.TipoSelecao
 
 private val CorCartaoPerfil = Color(0xFF1E1E1E)
 private val CorTextoFracoPerfil = Color(0xFFB5B5B5)
@@ -217,12 +222,13 @@ fun TelaPerfil(navController: NavController) {
                 CartaoPerfilItem(
                     modifier = Modifier.weight(1f),
                     altura = 210.dp,
-                    acao = AcaoCartao.EDITAR
+                    acao = AcaoCartao.EDITAR,
+                    aoClicar = { navController.navigate(Rotas.EDITAR_BIO) }
                 ) {
                     Text("Sobre mim", color = CorTextoFracoPerfil, fontSize = 16.sp)
                     Spacer(modifier = Modifier.height(14.dp))
                     Text(
-                        text = "Olá! Me chamo Você, tenho 23 anos. Atualmente estudo e curto conhecer gente nova.",
+                        text = PerfilDados.bio.ifBlank { "Toque para adicionar sua bio." },
                         color = Color.White,
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
@@ -235,10 +241,11 @@ fun TelaPerfil(navController: NavController) {
                 CartaoPerfilItem(
                     modifier = Modifier.weight(1f),
                     altura = 210.dp,
-                    acao = AcaoCartao.EDITAR
+                    acao = AcaoCartao.EDITAR,
+                    aoClicar = { navController.navigate(Rotas.EDITAR_ENCONTRO) }
                 ) {
                     Text(
-                        text = "O melhor primeiro encontro dessa cidade é...",
+                        text = PerfilDados.PERGUNTA_ENCONTRO,
                         color = CorTextoFracoPerfil,
                         fontSize = 16.sp,
                         maxLines = 2,
@@ -246,7 +253,7 @@ fun TelaPerfil(navController: NavController) {
                     )
                     Spacer(modifier = Modifier.height(14.dp))
                     Text(
-                        text = "O melhor seria num lugar calmo, com café e boa conversa.",
+                        text = PerfilDados.respostaEncontro.ifBlank { "Toque para responder." },
                         color = Color.White,
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
@@ -262,13 +269,29 @@ fun TelaPerfil(navController: NavController) {
                 CartaoPerfilItem(
                     modifier = Modifier.weight(1f),
                     altura = 170.dp,
-                    acao = AcaoCartao.ADICIONAR,
-                    centralizado = true
+                    acao = if (PerfilDados.perguntaEscolhida == null) AcaoCartao.ADICIONAR else AcaoCartao.EDITAR,
+                    centralizado = PerfilDados.perguntaEscolhida == null,
+                    aoClicar = { navController.navigate(Rotas.EDITAR_PERGUNTA) }
                 ) {
-                    Icon(Icons.Filled.FormatQuote, contentDescription = null, tint = CorTextoFracoPerfil, modifier = Modifier.size(30.dp))
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Selecionar legenda", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-                    Text("Responder à pergunta", color = CorTextoFracoPerfil, fontSize = 13.sp, textAlign = TextAlign.Center)
+                    val pergunta = PerfilDados.perguntaEscolhida
+                    if (pergunta == null) {
+                        Icon(Icons.Filled.FormatQuote, contentDescription = null, tint = CorTextoFracoPerfil, modifier = Modifier.size(30.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text("Selecionar legenda", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                        Text("Responder à pergunta", color = CorTextoFracoPerfil, fontSize = 13.sp, textAlign = TextAlign.Center)
+                    } else {
+                        Text(pergunta, color = CorTextoFracoPerfil, fontSize = 14.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = PerfilDados.respostaPergunta.ifBlank { "Sem resposta" },
+                            color = Color.White,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.Serif,
+                            maxLines = 3,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.weight(1f))
             }
@@ -277,48 +300,53 @@ fun TelaPerfil(navController: NavController) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 CartaoInteresse(
                     modifier = Modifier.weight(1f),
-                    titulo = "Curtindo", subtitulo = "Churrasco, +4",
+                    titulo = "Curtindo", lista = PerfilDados.hobbies, textoVazio = "Adicionar hobbies",
                     icone = Icons.Filled.Whatshot, emojis = "🍗💖"
-                )
+                ) { navController.navigate(Rotas.selecionar(TipoSelecao.HOBBIES.name)) }
                 CartaoInteresse(
                     modifier = Modifier.weight(1f),
-                    titulo = "Assistindo", subtitulo = "Adicionar programas/séries",
-                    icone = Icons.Filled.Tv, vazio = true
-                )
+                    titulo = "Assistindo", lista = PerfilDados.series, textoVazio = "Adicionar programas/séries",
+                    icone = Icons.Filled.Tv, emojis = "📺🍿",
+                    capas = PerfilDados.series.mapNotNull { PerfilDados.capa(TipoSelecao.SERIES, it) }.take(2)
+                ) { navController.navigate(Rotas.selecionar(TipoSelecao.SERIES.name)) }
             }
             Spacer(modifier = Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 CartaoInteresse(
                     modifier = Modifier.weight(1f),
-                    titulo = "Cineminha", subtitulo = "Interestelar, +2",
-                    icone = Icons.Filled.Movie, emojis = "🎬🍿"
-                )
+                    titulo = "Cineminha", lista = PerfilDados.filmes, textoVazio = "Adicionar filmes",
+                    icone = Icons.Filled.Movie, emojis = "🎬🍿",
+                    capas = PerfilDados.filmes.mapNotNull { PerfilDados.capa(TipoSelecao.FILMES, it) }.take(2)
+                ) { navController.navigate(Rotas.selecionar(TipoSelecao.FILMES.name)) }
                 CartaoInteresse(
                     modifier = Modifier.weight(1f),
-                    titulo = "Torcendo por", subtitulo = "Meu time, +1",
-                    icone = Icons.Filled.SportsSoccer, emojis = "⚽🏆"
-                )
+                    titulo = "Torcendo por", lista = PerfilDados.times, textoVazio = "Adicionar times",
+                    icone = Icons.Filled.SportsSoccer, emojis = "⚽🏆",
+                    capas = PerfilDados.times.mapNotNull { PerfilDados.capa(TipoSelecao.TIMES, it) }.take(2),
+                    escudos = true
+                ) { navController.navigate(Rotas.selecionar(TipoSelecao.TIMES.name)) }
             }
             Spacer(modifier = Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 CartaoInteresse(
                     modifier = Modifier.weight(1f),
-                    titulo = "Jogando", subtitulo = "Adicionar jogos",
-                    icone = Icons.Filled.SportsEsports, vazio = true
-                )
+                    titulo = "Jogando", lista = PerfilDados.jogos, textoVazio = "Adicionar jogos",
+                    icone = Icons.Filled.SportsEsports, emojis = "🎮🕹️",
+                    capas = PerfilDados.jogos.mapNotNull { PerfilDados.capa(TipoSelecao.JOGOS, it) }.take(2)
+                ) { navController.navigate(Rotas.selecionar(TipoSelecao.JOGOS.name)) }
                 CartaoInteresse(
                     modifier = Modifier.weight(1f),
-                    titulo = "Ouvindo", subtitulo = "Escolha músicas",
-                    icone = Icons.Filled.MusicNote, vazio = true, pontoVerde = true
-                )
+                    titulo = "Ouvindo", lista = PerfilDados.musicas, textoVazio = "Escolha músicas",
+                    icone = Icons.Filled.MusicNote, emojis = "🎧🎶", pontoVerde = true
+                ) { navController.navigate(Rotas.selecionar(TipoSelecao.MUSICAS.name)) }
             }
             Spacer(modifier = Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 CartaoInteresse(
                     modifier = Modifier.weight(1f),
-                    titulo = "Artistas preferidos", subtitulo = "Conectar música",
-                    icone = Icons.Filled.LibraryMusic, vazio = true, pontoVerde = true
-                )
+                    titulo = "Artistas preferidos", lista = emptyList(), textoVazio = "Conectar música",
+                    icone = Icons.Filled.LibraryMusic, pontoVerde = true
+                ) { }
                 Spacer(modifier = Modifier.weight(1f))
             }
 
@@ -496,6 +524,7 @@ private fun CartaoPerfilItem(
     altura: Dp,
     acao: AcaoCartao,
     centralizado: Boolean = false,
+    aoClicar: () -> Unit = {},
     conteudo: @Composable ColumnScope.() -> Unit
 ) {
     Box(modifier = modifier.height(altura)) {
@@ -504,6 +533,7 @@ private fun CartaoPerfilItem(
                 .fillMaxSize()
                 .clip(RoundedCornerShape(26.dp))
                 .background(CorCartaoPerfil)
+                .clickable(onClick = aoClicar)
                 .padding(18.dp),
             horizontalAlignment = if (centralizado) Alignment.CenterHorizontally else Alignment.Start,
             verticalArrangement = if (centralizado) Arrangement.Center else Arrangement.Top,
@@ -541,17 +571,23 @@ private fun CartaoPerfilItem(
 private fun CartaoInteresse(
     modifier: Modifier = Modifier,
     titulo: String,
-    subtitulo: String,
+    lista: List<String>,
+    textoVazio: String,
     icone: ImageVector,
     emojis: String? = null,
-    vazio: Boolean = false,
-    pontoVerde: Boolean = false
+    pontoVerde: Boolean = false,
+    capas: List<Int> = emptyList(),
+    escudos: Boolean = false,
+    aoClicar: () -> Unit
 ) {
+    val vazio = lista.isEmpty()
+    val subtitulo = PerfilDados.resumo(lista, textoVazio)
     CartaoPerfilItem(
         modifier = modifier,
         altura = 170.dp,
         acao = if (vazio) AcaoCartao.ADICIONAR else AcaoCartao.EDITAR,
-        centralizado = vazio
+        centralizado = vazio,
+        aoClicar = aoClicar
     ) {
         if (vazio) {
             Icon(icone, contentDescription = null, tint = CorTextoFracoPerfil, modifier = Modifier.size(34.dp))
@@ -576,7 +612,33 @@ private fun CartaoInteresse(
             Text(titulo, color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold)
             Text(subtitulo, color = CorTextoFracoPerfil, fontSize = 14.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Spacer(modifier = Modifier.height(10.dp))
-            if (emojis != null) {
+            if (capas.isNotEmpty()) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    capas.forEach { capa ->
+                        if (escudos) {
+                            Image(
+                                painter = painterResource(capa),
+                                contentDescription = null,
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(Color.White)
+                                    .padding(8.dp)
+                            )
+                        } else {
+                            Image(
+                                painter = painterResource(capa),
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(width = 52.dp, height = 74.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                            )
+                        }
+                    }
+                }
+            } else if (emojis != null) {
                 Text(emojis, fontSize = 34.sp)
             }
         }

@@ -1,5 +1,7 @@
-package com.example.myapplication.dados.banco
+package com.example.myapplication.data.repository
 
+import LojaDao
+import com.example.myapplication.data.local.*
 import android.content.Context
 import android.util.Log
 import com.example.myapplication.dados.Carteira
@@ -71,6 +73,6 @@ class LojaRepositorio private constructor(private val dao: LojaDao) {
         private const val TAG = "LojaRepositorio"
 
         fun obter(contexto: Context): LojaRepositorio =
-            LojaRepositorio(BancoDeDados.obter(contexto).lojaDao())
+            LojaRepositorio(AppDatabase.getDatabase(contexto).lojaDao())
     }
 }

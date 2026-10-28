@@ -54,9 +54,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.myapplication.dados.banco.CompraEntity
-import com.example.myapplication.dados.banco.LojaRepositorio
-import com.example.myapplication.dados.banco.StatusCompra
+import com.example.myapplication.data.local.CompraEntity
+import com.example.myapplication.data.repository.LojaRepositorio
+import com.example.myapplication.data.local.StatusCompra
 import com.example.myapplication.navegacao.Rotas
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType

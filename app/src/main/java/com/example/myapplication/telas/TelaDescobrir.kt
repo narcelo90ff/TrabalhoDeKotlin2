@@ -82,7 +82,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.myapplication.dados.AppDados
-import com.example.myapplication.dados.banco.SocialRepositorio
+import com.example.myapplication.data.repository.SocialRepositorio
 import kotlinx.coroutines.launch
 import com.example.myapplication.dados.AbaDescobrir
 import com.example.myapplication.dados.Astrologia

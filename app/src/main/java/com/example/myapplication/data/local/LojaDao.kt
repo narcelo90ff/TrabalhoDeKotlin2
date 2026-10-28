@@ -1,14 +1,12 @@
-package com.example.myapplication.dados.banco
-
 import androidx.room3.Dao
 import androidx.room3.Insert
 import androidx.room3.Query
 import androidx.room3.Transaction
 import androidx.room3.Upsert
-import com.example.myapplication.dados.banco.CarteiraEntity
-import com.example.myapplication.dados.banco.CompraEntity
-import com.example.myapplication.dados.banco.StatusCompra
-import com.example.myapplication.dados.banco.TipoCompra
+import com.example.myapplication.data.local.CarteiraEntity
+import com.example.myapplication.data.local.CompraEntity
+import com.example.myapplication.data.local.StatusCompra
+import com.example.myapplication.data.local.TipoCompra
 
 @Dao
 abstract class LojaDao {
@@ -22,23 +20,23 @@ abstract class LojaDao {
     @Query("SELECT * FROM compras ORDER BY criadoEm DESC")
     abstract suspend fun listarCompras(): List<CompraEntity>
 
-    @Query("UPDATE compras SET status = :status, pagoEm = :pagoEm WHERE id = :id")
-    abstract suspend fun atualizarStatus(id: Long, status: String, pagoEm: Long?)
-
     @Query("SELECT * FROM carteira WHERE id = 1")
     abstract suspend fun buscarCarteira(): CarteiraEntity?
 
     @Upsert
     abstract suspend fun salvarCarteira(carteira: CarteiraEntity)
 
+    @Query("UPDATE compras SET status = :novo, pagoEm = :pagoEm WHERE id = :id AND status = :pendente")
+    abstract suspend fun mudarStatusSePendente(id: Long, pendente: String, novo: String, pagoEm: Long?): Int
 
     @Transaction
     open suspend fun confirmarPagamento(id: Long): CarteiraEntity? {
         val compra = buscarCompra(id) ?: return null
         val atual = buscarCarteira() ?: CarteiraEntity()
-        if (compra.status != StatusCompra.PENDENTE) return atual
 
-        atualizarStatus(id, StatusCompra.PAGO, System.currentTimeMillis())
+        val mudou = mudarStatusSePendente(id, StatusCompra.PENDENTE, StatusCompra.PAGO, System.currentTimeMillis())
+        if (mudou == 0) return atual
+
         val nova = when (compra.tipo) {
             TipoCompra.BOOST -> atual.copy(boosts = atual.boosts + compra.quantidade)
             TipoCompra.SUPERLIKE -> atual.copy(superLikes = atual.superLikes + compra.quantidade)
@@ -50,9 +48,6 @@ abstract class LojaDao {
 
     @Transaction
     open suspend fun cancelarSePendente(id: Long) {
-        val compra = buscarCompra(id) ?: return
-        if (compra.status == StatusCompra.PENDENTE) {
-            atualizarStatus(id, StatusCompra.CANCELADO, null)
-        }
+        mudarStatusSePendente(id, StatusCompra.PENDENTE, StatusCompra.CANCELADO, null)
     }
 }

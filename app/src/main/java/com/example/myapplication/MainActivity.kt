@@ -10,9 +10,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import com.example.myapplication.dados.banco.LocalRepositorio
-import com.example.myapplication.dados.banco.LojaRepositorio
-import com.example.myapplication.dados.banco.SocialRepositorio
+import com.example.myapplication.data.repository.LocalRepositorio
+import com.example.myapplication.data.repository.LojaRepositorio
+import com.example.myapplication.data.repository.SocialRepositorio
 import com.example.myapplication.navegacao.AppNavigation
 
 class MainActivity : ComponentActivity() {

@@ -53,7 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.myapplication.componentes.FotoOuInicial
-import com.example.myapplication.dados.banco.SocialRepositorio
+import com.example.myapplication.data.repository.SocialRepositorio
 import com.example.myapplication.modelo.Conversa
 import com.example.myapplication.modelo.Mensagem
 import com.example.myapplication.modelo.Pessoa

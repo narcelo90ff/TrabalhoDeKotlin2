@@ -1,7 +1,7 @@
 # Documentação do App — Trabalho 3 
 
 nome dos participantes: Marcelo Nassar, Anthoni
-RGM:43342027
+RGM:43342027/42795621
 
 **Parte 1 — Visão geral**
 1. [Visão geral](#1-visão-geral) · 2. [Tecnologias](#2-tecnologias) · 3. [Telas e navegação](#3-telas-e-navegação) · 4. [Estrutura do código](#4-estrutura-do-código) · 5. [Banco de dados (Room)](#5-banco-de-dados-room) · 6. [Fluxo de dados](#6-fluxo-de-dados) · 7. [Decisões de projeto](#7-decisões-de-projeto) · 8. [Como rodar](#8-como-rodar) · 9. [Como testar a persistência](#9-como-testar-a-persistência) · 10. [Limitações conhecidas](#10-limitações-conhecidas)

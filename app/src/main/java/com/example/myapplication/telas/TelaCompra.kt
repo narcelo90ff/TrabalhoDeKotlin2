@@ -52,8 +52,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.myapplication.componentes.BarraRolagem
-import com.example.myapplication.dados.banco.LojaRepositorio
-import com.example.myapplication.dados.banco.TipoCompra
+import com.example.myapplication.data.repository.LojaRepositorio
+import com.example.myapplication.data.local.TipoCompra
 import com.example.myapplication.navegacao.Rotas
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt

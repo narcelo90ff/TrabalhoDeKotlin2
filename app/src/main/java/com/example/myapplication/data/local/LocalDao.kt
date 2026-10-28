@@ -1,14 +1,19 @@
-package com.example.myapplication.dados.banco
+package com.example.myapplication.data.local
 
 import androidx.room3.Dao
 import androidx.room3.Insert
 import androidx.room3.Query
+import kotlinx.coroutines.flow.Flow
+
 
 @Dao
 abstract class LocalDao {
 
     @Insert
     abstract suspend fun inserir(local: LocalEntity): Long
+
+    @Query("SELECT * FROM locais ORDER BY id")
+    abstract fun observar(): Flow<List<LocalEntity>>
 
     @Query("SELECT * FROM locais ORDER BY id")
     abstract suspend fun listar(): List<LocalEntity>

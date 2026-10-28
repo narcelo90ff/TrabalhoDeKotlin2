@@ -1,10 +1,12 @@
-package com.example.myapplication.dados.banco
+package com.example.myapplication.data.local
 
 import android.content.Context
 import androidx.room3.Database
 import androidx.room3.Room
 import androidx.room3.RoomDatabase
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import com.example.myapplication.data.local.CarteiraEntity
+import com.example.myapplication.data.local.CompraEntity
 import com.example.myapplication.modelo.Conversa
 import com.example.myapplication.modelo.Mensagem
 import com.example.myapplication.modelo.Pessoa
@@ -30,25 +32,31 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun mensagemDao(): MensagemDao
 
     companion object {
+
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
-        fun getInstance(contexto: Context): AppDatabase =
-            INSTANCE ?: synchronized(this) {
-                INSTANCE ?: Room.databaseBuilder<AppDatabase>(
-                    context = contexto.applicationContext,
-                    name = "tinder_app.db"
-                )
-                    .setDriver(BundledSQLiteDriver())
-                    .setQueryCoroutineContext(Dispatchers.IO)
+        fun getDatabase(context: Context): AppDatabase {
 
-                    .fallbackToDestructiveMigration(dropAllTables = true)
-                    .build()
-                    .also { INSTANCE = it }
+            val tempInstance = INSTANCE
+
+            if (tempInstance != null) {
+                return tempInstance
+            } else {
+                synchronized(this) {
+                    val instance = Room.databaseBuilder<AppDatabase>(
+                        context = context.applicationContext,
+                        name = "tinder_app.db"
+                    )
+                        .setDriver(BundledSQLiteDriver())
+                        .setQueryCoroutineContext(Dispatchers.IO)
+                        .fallbackToDestructiveMigration(dropAllTables = true)
+                        .build()
+
+                    INSTANCE = instance
+                    return instance
+                }
             }
+        }
     }
-}
-
-object BancoDeDados {
-    fun obter(contexto: Context): AppDatabase = AppDatabase.getInstance(contexto)
 }

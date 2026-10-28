@@ -6,7 +6,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.example.myapplication.R
 
-/** Tipos de lista que o usuário pode editar no perfil (telas do vídeo). */
 enum class TipoSelecao(
     val titulo: String,
     val maximo: Int,
@@ -115,7 +114,6 @@ object PerfilDados {
         "Valorant" to R.drawable.valorant
     )
 
-    /** Capa (drawable) do item, ou null quando não há imagem. */
     fun capa(tipo: TipoSelecao, nome: String): Int? = when (tipo) {
         TipoSelecao.SERIES -> capasSeries[nome]
         TipoSelecao.FILMES -> capasFilmes[nome]
@@ -142,7 +140,6 @@ object PerfilDados {
         TipoSelecao.MUSICAS -> catalogoMusicas
     }
 
-    /** Texto resumo usado nos cartões do perfil: "Primeiro, +N". */
     fun resumo(lista: List<String>, vazio: String): String = when {
         lista.isEmpty() -> vazio
         lista.size == 1 -> lista[0]

@@ -4,7 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateListOf
-import com.example.myapplication.dados.banco.LocalEntity
+import com.example.myapplication.data.local.LocalEntity
 
 
 object Preferencias {

@@ -38,7 +38,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,21 +48,31 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.componentes.BarraRolagem
-import com.example.myapplication.dados.Preferencias
-import com.example.myapplication.dados.banco.LocalEntity
-import com.example.myapplication.dados.banco.LocalRepositorio
-import kotlinx.coroutines.launch
+import com.example.myapplication.ui.local.LocalViewModel
+import com.example.myapplication.ui.local.LocalViewModelFactory
+import com.example.myapplication.data.local.LocalEntity
+import com.example.myapplication.data.repository.LocalRepositorio
 
+// ╔══════════════════════════════════════════════════════════╗
+// ║  TelaLocalizacao — a View (MVVM)                         ║
+// ║  Antes: 5 variáveis remember + CoroutineScope + acesso   ║
+// ║  direto ao Repository dentro da tela.                    ║
+// ║  Agora: só lê o uiState e avisa o ViewModel.             ║
+// ╚══════════════════════════════════════════════════════════╝
 @Composable
-fun TelaLocalizacao(navController: NavController) {
-    val contexto = LocalContext.current
-    val repositorio = remember { LocalRepositorio.obter(contexto) }
-    val escopo = rememberCoroutineScope()
-
-    var mostrarNovo by remember { mutableStateOf(false) }
-    var editando by remember { mutableStateOf<LocalEntity?>(null) }
-    var erroEdicao by remember { mutableStateOf<String?>(null) }
+fun TelaLocalizacao(
+    navController: NavController,
+    // Monta o ViewModel injetando o Repository pela Factory (igual à aula)
+    viewModel: LocalViewModel = viewModel(
+        factory = LocalViewModelFactory(
+            LocalRepositorio.obter(LocalContext.current)
+        )
+    )
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val estadoLista = rememberLazyListState()
 
     Column(
@@ -112,13 +121,13 @@ fun TelaLocalizacao(navController: NavController) {
                 contentPadding = PaddingValues(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(Preferencias.locaisSalvos, key = { it.id }) { local ->
+                items(uiState.locais, key = { it.id }) { local ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(16.dp))
                             .background(Color(0xFF1A1A1A))
-                            .clickable { escopo.launch { repositorio.escolher(local.id) } }
+                            .clickable { viewModel.onEscolher(local) }
                             .padding(horizontal = 16.dp, vertical = 16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -132,10 +141,7 @@ fun TelaLocalizacao(navController: NavController) {
                             tint = CfgTextoFraco,
                             modifier = Modifier
                                 .size(22.dp)
-                                .clickable {
-                                    erroEdicao = null
-                                    editando = local
-                                }
+                                .clickable { viewModel.onEditar(local) }
                         )
                         Spacer(modifier = Modifier.width(14.dp))
                         if (local.atual) {
@@ -145,7 +151,7 @@ fun TelaLocalizacao(navController: NavController) {
                                 Icons.Filled.Close,
                                 contentDescription = "Remover local",
                                 tint = CfgTextoFraco,
-                                modifier = Modifier.clickable { escopo.launch { repositorio.remover(local.id) } }
+                                modifier = Modifier.clickable { viewModel.onRemover(local) }
                             )
                         }
                     }
@@ -161,7 +167,7 @@ fun TelaLocalizacao(navController: NavController) {
                 .padding(16.dp)
         ) {
             Button(
-                onClick = { mostrarNovo = true },
+                onClick = { viewModel.onAbrirNovo() },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF1F1F1), contentColor = Color.Black),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -172,38 +178,25 @@ fun TelaLocalizacao(navController: NavController) {
         }
     }
 
-    if (mostrarNovo) {
+    if (uiState.mostrarDialogoNovo) {
         DialogLocal(
             titulo = "Adicionar local novo",
             textoInicial = "",
             botao = "Adicionar",
             erro = null,
-            aoFechar = { mostrarNovo = false },
-            aoConfirmar = { nome ->
-                escopo.launch {
-                    repositorio.adicionar(nome)
-                    mostrarNovo = false
-                }
-            }
+            aoFechar = { viewModel.onFecharNovo() },
+            aoConfirmar = { nome -> viewModel.onAdicionar(nome) }
         )
     }
 
-    editando?.let { local ->
+    uiState.localEmEdicao?.let { local ->
         DialogLocal(
             titulo = "Editar local",
             textoInicial = local.nome,
             botao = "Salvar",
-            erro = erroEdicao,
-            aoFechar = { editando = null },
-            aoConfirmar = { nome ->
-                escopo.launch {
-                    if (repositorio.renomear(local.id, nome)) {
-                        editando = null
-                    } else {
-                        erroEdicao = "Já existe um local com esse nome."
-                    }
-                }
-            }
+            erro = uiState.erroEdicao,
+            aoFechar = { viewModel.onCancelarEdicao() },
+            aoConfirmar = { nome -> viewModel.onSalvarEdicao(nome) }
         )
     }
 }

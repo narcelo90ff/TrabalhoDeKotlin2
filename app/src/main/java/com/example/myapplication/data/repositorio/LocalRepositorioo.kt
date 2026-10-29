@@ -9,6 +9,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.UUID
+import com.example.myapplication.data.local.CarteiraEntity
+
 
 class LojaRepositorio private constructor(private val dao: LojaDao) {
 

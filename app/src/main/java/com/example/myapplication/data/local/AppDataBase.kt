@@ -5,8 +5,6 @@ import androidx.room3.Database
 import androidx.room3.Room
 import androidx.room3.RoomDatabase
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
-import com.example.myapplication.data.local.CarteiraEntity
-import com.example.myapplication.data.local.CompraEntity
 import com.example.myapplication.modelo.Conversa
 import com.example.myapplication.modelo.Mensagem
 import com.example.myapplication.modelo.Pessoa

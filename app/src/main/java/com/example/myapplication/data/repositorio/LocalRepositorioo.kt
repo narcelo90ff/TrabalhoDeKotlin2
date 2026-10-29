@@ -1,11 +1,10 @@
 package com.example.myapplication.data.repository
 
-import LojaDao
-import com.example.myapplication.data.local.*
 import android.content.Context
 import android.util.Log
 import com.example.myapplication.dados.Carteira
 import com.example.myapplication.dados.Pix
+import com.example.myapplication.data.local.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -26,8 +25,7 @@ class LojaRepositorio private constructor(private val dao: LojaDao) {
         }
 
     suspend fun carregarCarteira() {
-        val salva = io<CarteiraEntity?>(null) { dao.buscarCarteira() }
-        salva?.let { Carteira.aplicar(it) }
+        io<CarteiraEntity?>(null) { dao.buscarCarteira() }?.let { Carteira.aplicar(it) }
     }
 
     suspend fun criarCompra(
@@ -38,7 +36,7 @@ class LojaRepositorio private constructor(private val dao: LojaDao) {
         valorCentavos: Long
     ): Long {
         val txid = UUID.randomUUID().toString().replace("-", "").take(25)
-        val codigo = Pix.gerarCopiaECola(valorCentavos = valorCentavos, txid = txid)
+        val codigo = Pix.gerarCopiaECola(valorCentavos, txid)
         return io(-1L) {
             dao.inserirCompra(
                 CompraEntity(
@@ -57,7 +55,7 @@ class LojaRepositorio private constructor(private val dao: LojaDao) {
         io<CompraEntity?>(null) { dao.buscarCompra(id) }
 
     suspend fun listarCompras(): List<CompraEntity> =
-        io(emptyList()) { dao.listarCompras() }
+        io(emptyList<CompraEntity>()) { dao.listarCompras() }
 
     suspend fun confirmarPagamento(id: Long): Boolean {
         val carteira = io<CarteiraEntity?>(null) { dao.confirmarPagamento(id) } ?: return false
@@ -65,14 +63,12 @@ class LojaRepositorio private constructor(private val dao: LojaDao) {
         return true
     }
 
-    suspend fun cancelar(id: Long) {
-        io(Unit) { dao.cancelarSePendente(id) }
-    }
+    suspend fun cancelar(id: Long) = io(Unit) { dao.cancelarSePendente(id) }
 
     companion object {
         private const val TAG = "LojaRepositorio"
 
-        fun obter(contexto: Context): LojaRepositorio =
+        fun obter(contexto: Context) =
             LojaRepositorio(AppDatabase.getDatabase(contexto).lojaDao())
     }
 }

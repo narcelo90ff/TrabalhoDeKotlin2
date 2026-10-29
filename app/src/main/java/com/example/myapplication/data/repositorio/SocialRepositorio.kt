@@ -126,7 +126,6 @@ class SocialRepositorio private constructor(
         return pessoa
     }
 
-    // ---------- Conversas ----------
 
     suspend fun listarResumos(): List<ResumoConversa> =
         io(emptyList()) {
@@ -177,7 +176,6 @@ class SocialRepositorio private constructor(
         atualizarContagens()
     }
 
-    // ---------- Mensagens ----------
 
     suspend fun listarMensagens(conversaId: Int): List<Mensagem> =
         io(emptyList()) { mensagemDao.buscarPorConversa(conversaId) }
